@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** design only. No game code exists yet.
+**Status:** Milestone 0 (scaffold) done: build, tests, Pages deploy, main loop and debug overlay. No gameplay yet.
 
 ## The idea
 
@@ -16,9 +16,18 @@ Every skill comes from a letter in your sack, and each letter gives you three op
 
 Seven days isn't enough to reach everyone, so you also have to choose who gets their letter. Every seal you break makes the Postal Inspectors more likely to find you on the road.
 
-## Planned tech
+## Running it
 
-TypeScript, Vite and Canvas 2D with no game engine and no backend. All art is drawn in code, including detailed character sprites, and all sound is generated with the Web Audio API. Hosted on GitHub Pages.
+```bash
+npm install
+npm run dev
+```
+
+Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
+
+## Tech
+
+TypeScript, Vite and Canvas 2D with no game engine, no runtime dependencies and no backend. All art is drawn in code, including detailed character sprites, and all sound is generated with the Web Audio API. Hosted on GitHub Pages.
 
 ## Docs
 
