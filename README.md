@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** Milestone 0 (scaffold) done: build, tests, Pages deploy, main loop and debug overlay. No gameplay yet.
+**Status:** Milestone 1 (sprite pipeline) is done and waiting for an art check before Milestone 2. The Rookie, Odile and Juniper are drawn at field, battle and portrait sizes. The game opens on a test yard where you can walk the Rookie around. There is no story or battle yet.
 
 ## The idea
 
@@ -23,7 +23,7 @@ npm install
 npm run dev
 ```
 
-Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
+Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
 
 ## Tech
 
@@ -32,4 +32,5 @@ TypeScript, Vite and Canvas 2D with no game engine, no runtime dependencies and 
 ## Docs
 
 - [Game design](docs/DESIGN.md): **contains story spoilers**, including the late-game twist
+- [Sprites](docs/SPRITES.md): how the character art is drawn in code
 - [CLAUDE.md](CLAUDE.md): build order and engineering rules for whoever writes the code

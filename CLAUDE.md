@@ -4,7 +4,7 @@ A short browser RPG where every skill comes from a letter you can carry, open or
 
 ## Current state
 
-Design only. There is no code yet. Start at Milestone 0.
+Milestones 0 and 1 are done. The Rookie, Odile and Juniper exist at all three sprite sizes, and the sprite look is waiting for the owner's check before Milestone 2 starts. See `docs/SPRITES.md` for the sprite conventions.
 
 ## Tech rules
 
