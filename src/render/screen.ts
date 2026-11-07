@@ -5,6 +5,9 @@ export class Screen {
   readonly canvas: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
   readonly host: HTMLDivElement;
+  /** Sits exactly over the canvas; HTML UI goes in here. `--u` is one logical pixel in CSS px. */
+  readonly ui: HTMLDivElement;
+  private readonly frame: HTMLDivElement;
   current: ScaleResult = { scale: 1, cssWidth: LOGICAL_WIDTH, cssHeight: LOGICAL_HEIGHT };
 
   constructor(parent: HTMLElement) {
@@ -15,7 +18,12 @@ export class Screen {
     this.canvas.width = LOGICAL_WIDTH;
     this.canvas.height = LOGICAL_HEIGHT;
     this.canvas.setAttribute('aria-label', 'Sealbreak game screen');
-    this.host.appendChild(this.canvas);
+    this.frame = document.createElement('div');
+    this.frame.className = 'screen-frame';
+    this.ui = document.createElement('div');
+    this.ui.className = 'ui-layer';
+    this.frame.append(this.canvas, this.ui);
+    this.host.appendChild(this.frame);
     parent.appendChild(this.host);
     const ctx = this.canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D is not available');
@@ -32,5 +40,8 @@ export class Screen {
     this.current = computeScale(width, height, window.devicePixelRatio || 1);
     this.canvas.style.width = `${this.current.cssWidth}px`;
     this.canvas.style.height = `${this.current.cssHeight}px`;
+    this.frame.style.width = `${this.current.cssWidth}px`;
+    this.frame.style.height = `${this.current.cssHeight}px`;
+    this.frame.style.setProperty('--u', `${this.current.cssWidth / LOGICAL_WIDTH}px`);
   }
 }

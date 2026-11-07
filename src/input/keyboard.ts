@@ -32,7 +32,9 @@ export class Keyboard {
   private directionOrder: Action[] = [];
 
   attach(target: Window): void {
+    const typing = (e: KeyboardEvent): boolean => e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
     target.addEventListener('keydown', (e) => {
+      if (typing(e)) return;
       const action = actionForCode(e.code);
       if (!action) return;
       e.preventDefault();
@@ -44,6 +46,7 @@ export class Keyboard {
       }
     });
     target.addEventListener('keyup', (e) => {
+      if (typing(e)) return;
       const action = actionForCode(e.code);
       if (!action) return;
       this.held.delete(action);

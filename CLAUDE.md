@@ -4,7 +4,7 @@ A short browser RPG where every skill comes from a letter you can carry, open or
 
 ## Current state
 
-Milestones 0 and 1 are done. The Rookie, Odile and Juniper exist at all three sprite sizes, and the sprite look is waiting for the owner's check before Milestone 2 starts. See `docs/SPRITES.md` for the sprite conventions.
+Milestones 0 to 2 are done: the sprite pipeline (see `docs/SPRITES.md`), and the field with Thistle Cross, the opening office scene, dialogue with story flags and save/load. Thistle Road is a stub that ends at the toll gate until Milestone 5. Next up is Milestone 3, the battle core.
 
 ## Tech rules
 
