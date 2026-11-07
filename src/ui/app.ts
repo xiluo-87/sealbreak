@@ -42,6 +42,8 @@ const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facin
   fen: { mapId: 'bellwether-fen', x: 1, y: 14, facing: 'right' },
   'copperhill-road': { mapId: 'copperhill-road', x: 1, y: 12, facing: 'right' },
   copperhill: { mapId: 'copperhill', x: 1, y: 10, facing: 'right' },
+  'salt-road': { mapId: 'salt-road', x: 1, y: 11, facing: 'right' },
+  salt: { mapId: 'salt-town', x: 1, y: 12, facing: 'right' },
 };
 
 /** Story so far for each debug start: party, day, stop and flags. */
@@ -53,6 +55,8 @@ const REGION_STORY: Record<string, { party: PartyId[]; day: number; stop?: strin
   fen: { party: ['rookie', 'odile', 'fenn'], day: 2, stop: 'fen', flags: ['toll.won', 'road.seen', 'fen.roadSeen'] },
   'copperhill-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined'] },
   copperhill: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen'] },
+  'salt-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past'] },
+  salt: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'] },
 };
 
 function playTime(ms: number): string {
@@ -239,9 +243,9 @@ export class App {
         else if (kind === 'inn') this.showInn(state, id, done);
         else this.showTravel(state, done);
       },
-      read: (id, done) => {
+      read: (id, intro, done) => {
         const l = id === 'FENN' ? FENNS_LETTER : id === 'GRAN' ? GRANS_LETTER : LETTER_BY_ID[id];
-        if (l) this.reader.show(l, 'broken', done);
+        if (l) this.reader.show(l, 'broken', done, intro);
         else done();
       },
       travel: (kind) => {

@@ -330,6 +330,8 @@ Every letter by Odile ends with the words **"Keep warm."**, whoever is supposed 
 2. **The reveal, Salt Road:** Sorrel lays out the Inspectorate's case against an unknown forger. Juniper compares the letters and recognises one hand. The player can have the Rookie open the tin and compare. Odile doesn't deny it.
 3. **After the reveal:** delivering any remaining forged letter adds a choice: **say nothing** or **tell them the truth**. Reactions differ, and neither answer is treated as correct. Odile stays in the party, and the mood at camp changes.
 
+In the game, the reveal happens on the quay at the Salt Road after the Harbour Ambush, and Sorrel is fought straight after it. The first nights at camp afterwards let the Rookie answer Odile (it was still a kind thing, or she should have said), and decide whether Juniper goes and talks to her, which sets how Juniper feels about Odile for the epilogues.
+
 ### Why Vane wants the sack
 
 Vane was a child when she received a letter from her father, a captain killed in the war. It got her through her childhood. As an adult inspector she found it was a forgery, and she has spent her career hunting the Kind Hand.

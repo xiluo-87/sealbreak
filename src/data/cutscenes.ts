@@ -49,6 +49,19 @@ export const CUTSCENES: Record<string, Cutscene> = Object.fromEntries(
       { id: 'cop-arrive', steps: [{ wait: 300 }, { say: 'cop-arrive-1' }] },
       { id: 'brass', steps: [{ say: 'brass-1' }, { battle: 'brass' }, { say: 'brass-2' }] },
       { id: 'memorial-fenn', steps: [{ say: 'memorial-fenn' }, { read: 'FENN' }, { say: 'memorial-fenn-2' }] },
+      {
+        id: 'ambush',
+        steps: [
+          { say: 'ambush-1' },
+          { battle: 'harbour-ambush' },
+          { say: 'sorrel-1' },
+          { say: 'reveal-1' },
+          { read: 'GRAN', intro: 'You open the tin.', if: { flag: 'reveal.tin' } },
+          { say: 'reveal-2' },
+          { battle: 'sorrel' },
+          { say: 'sorrel-after' },
+        ],
+      },
     ] satisfies Cutscene[]
   ).map((c) => [c.id, c]),
 );

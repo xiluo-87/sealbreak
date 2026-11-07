@@ -39,8 +39,8 @@ export interface FieldHooks {
   open(kind: 'shop' | 'inn' | 'travel', id: string, done: () => void): void;
   /** A travel exit: choose a road on (`leave`), or come back from a detour (`return`). */
   travel(kind: 'leave' | 'return'): void;
-  /** Shows a letter in the reader; `done` runs when it is closed. */
-  read(letter: string, done: () => void): void;
+  /** Shows a letter in the reader, with an optional line above it; `done` runs when it is closed. */
+  read(letter: string, intro: string | undefined, done: () => void): void;
 }
 
 interface Npc {
@@ -306,6 +306,12 @@ export class FieldScene implements Scene {
     const run = this.cutscene;
     if (!run || this.dialogue) return;
     const step = run.c.steps[run.i];
+    if (step && step.if && !check(step.if, this.state)) {
+      run.i++;
+      run.timer = 0;
+      run.started = false;
+      return;
+    }
     const next = (): void => {
       run.i++;
       run.started = false;
@@ -373,7 +379,7 @@ export class FieldScene implements Scene {
       if (!run.started) {
         run.started = true;
         this.inBattle = true;
-        this.hooks.read(step.read, () => {
+        this.hooks.read(step.read, step.intro, () => {
           this.inBattle = false;
           next();
         });

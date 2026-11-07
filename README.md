@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** Milestone 6 (the journey) is done, and the game plays on phones. The seven-day clock runs from Thistle Cross through Bellwether Fen to Copperhill, with a road map of choices, camps by the fire, shops and inns. In the Fen, Juniper joins once Bailiff Grist is dealt with; in Copperhill there is a Union Hall brawl, Old Brass in the Old Mine, and Fenn's scene at the war memorial. Eight more letters can be delivered. The Salt Road comes next, in Milestone 7.
+**Status:** Milestone 7 is done, and the game plays on phones. The journey now runs from Thistle Cross through Bellwether Fen and Copperhill to the Salt Road, with its harbour, four more letters, an Inspectorate ambush and Deputy Inspector Lark Sorrel. Kingsend, the final confrontation and the endings come next, in Milestone 8.
 
 ## The idea
 
@@ -25,7 +25,7 @@ npm run dev
 
 Arrow keys or WASD walk, Shift runs, Enter, Space or Z talks and confirms, and Esc or X opens the menu. On a phone, hold it sideways: drag anywhere on the left to walk, tap **Talk** to talk and confirm, and use the menu button at the top right. Menus and letters can be tapped directly.
 
-Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Use `?battle=road-hogs&level=3` to jump straight into a fight (`sorting-rats`, `road-goose`, `road-hogs` or `road-brigand`), and `?region=` to start in a region with the story so far: `thistle`, `thistle-road`, `gate`, `fen-road`, `fen`, `copperhill-road` or `copperhill`. `?level=…` and `?heat=…` work with both. Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
+Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Use `?battle=road-hogs&level=3` to jump straight into a fight (`sorting-rats`, `road-goose`, `road-hogs` or `road-brigand`), and `?region=` to start in a region with the story so far: `thistle`, `thistle-road`, `gate`, `fen-road`, `fen`, `copperhill-road`, `copperhill`, `salt-road` or `salt`. `?level=…` and `?heat=…` work with both. Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
 
 ## Tech
 

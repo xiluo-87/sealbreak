@@ -20,6 +20,18 @@ export const JOURNEY_FOLK: FolkSpec[] = [
   { id: 'ashworth', name: 'Mr Ashworth', build: 'slim', skin: '#f0d0b8', hair: '#3a3a3a', hairStyle: 'short', top: '#2a2a32', topStyle: 'long', bottom: '#2a2a32', shoes: '#141418', hat: { style: 'flatcap', colour: '#1a1a20' }, extras: ['glasses', 'ledger'] },
   { id: 'miner1', name: 'Miner', build: 'average', skin: '#b88060', hair: '#2e2620', hairStyle: 'short', top: '#5a5048', topStyle: 'shirt', bottom: '#3e3a36', shoes: '#2e2620', hat: { style: 'flatcap', colour: '#3a3430' }, extras: ['stubble'] },
   { id: 'miner2', name: 'Miner', build: 'stout', skin: '#d0a080', hair: '#5a4030', hairStyle: 'short', top: '#6a5a4a', topStyle: 'jacket', bottom: '#3e3a36', shoes: '#2e2620', hat: { style: 'flatcap', colour: '#4a4038' }, extras: ['moustache'] },
+  // The Salt Road.
+  { id: 'quay', name: 'Harbourmaster Quay', build: 'stout', skin: '#c89070', hair: '#e8e4dc', hairStyle: 'short', top: '#2e4a6a', topStyle: 'long', bottom: '#2a3448', shoes: '#1e1e24', hat: { style: 'flatcap', colour: '#2a3a5a' }, extras: ['beard', 'badge'] },
+  { id: 'mara', name: 'Mara Vell-Quay', build: 'slim', skin: '#d8a888', hair: '#4a3a3a', hairStyle: 'long', top: '#3a8a8a', topStyle: 'dress', bottom: '#2e6a6a', skirt: true, shoes: '#3a2e26', extras: ['shawl'], accent: '#c8b088' },
+  { id: 'brin', name: 'Brin Pike', build: 'average', skin: '#c08868', hair: '#b85a34', hairStyle: 'tied', top: '#d8c8a0', topStyle: 'shirt', bottom: '#4a4a5a', shoes: '#3a2e26', extras: ['toolbelt'] },
+  { id: 'salttrader', name: 'Market trader', build: 'stout', skin: '#b07a58', hair: '#2a2420', hairStyle: 'short', top: '#c8b088', topStyle: 'shirt', bottom: '#7a6448', shoes: '#5a4434', hat: { style: 'kerchief', colour: '#2e7a7a' }, apron: '#e8dcc0' },
+  { id: 'saltinn', name: 'Innkeeper', build: 'average', skin: '#c89878', hair: '#5a4a3a', hairStyle: 'bun', top: '#8a5a3a', topStyle: 'dress', bottom: '#6a4430', skirt: true, shoes: '#3a2a20', apron: '#efe6d2' },
+  { id: 'fishwife', name: 'Fishwife', build: 'stout', skin: '#d0a080', hair: '#8a8478', hairStyle: 'bun', top: '#4a6a7a', topStyle: 'dress', bottom: '#3a5464', skirt: true, shoes: '#2e2a26', apron: '#c8c0a8', extras: ['shawl'] },
+  { id: 'oldsoldier', name: 'Old soldier', build: 'slim', skin: '#b88868', hair: '#d8d4cc', hairStyle: 'short', top: '#7a6a48', topStyle: 'jacket', bottom: '#5a5040', shoes: '#3a3226', extras: ['moustache', 'stoop', 'badge'] },
+  // The Inspectorate.
+  { id: 'inspector', name: 'Inspector', build: 'average', skin: '#e4b498', hair: '#3a3230', hairStyle: 'short', top: '#26242c', topStyle: 'long', bottom: '#26242c', shoes: '#141418', hat: { style: 'flatcap', colour: '#26242c' }, extras: ['badge'] },
+  { id: 'sorrel', name: 'Deputy Inspector Sorrel', build: 'slim', skin: '#f0c4a8', hair: '#a4502e', hairStyle: 'curly', top: '#24222a', topStyle: 'jacket', bottom: '#24222a', shoes: '#121216', hat: { style: 'flatcap', colour: '#24222a' }, accent: '#a4502e', extras: ['badge', 'clipboard'] },
+  { id: 'vane', name: 'Chief Inspector Vane', build: 'slim', skin: '#f0d2c0', hair: '#e8dcb8', hairStyle: 'bun', top: '#18161c', topStyle: 'long', bottom: '#18161c', shoes: '#0c0c10', accent: '#d8c070', extras: ['badge', 'chain'] },
 ];
 
 export const JOURNEY_FOLK_SPRITES = JOURNEY_FOLK.map(folkSprites);

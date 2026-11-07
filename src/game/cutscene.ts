@@ -4,7 +4,7 @@
  * Actors are `player` or the id of an NPC on the current map.
  */
 import type { Dir } from '../field/dir';
-import type { Effect } from './conditions';
+import type { Condition, Effect } from './conditions';
 
 export type CutStep =
   | { say: string }
@@ -15,12 +15,15 @@ export type CutStep =
   | { fade: 'out' | 'in' }
   | { warp: { map: string; x: number; y: number; facing: Dir } }
   | { battle: string }
-  /** Shows a letter in the reader (by id, including key letters such as FENN). */
-  | { read: string };
+  /** Shows a letter in the reader (by id, including key letters such as FENN), with an optional line above it. */
+  | { read: string; intro?: string };
+
+/** Any step can be made to run only when a condition holds. */
+export type CutsceneStep = CutStep & { if?: Condition };
 
 export interface Cutscene {
   id: string;
-  steps: CutStep[];
+  steps: CutsceneStep[];
 }
 
 export function cutsceneDialogues(c: Cutscene): string[] {
