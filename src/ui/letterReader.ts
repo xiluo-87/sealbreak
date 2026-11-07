@@ -5,6 +5,7 @@
 import { sound } from '../audio';
 import { touchMode } from '../input/hints';
 import type { LetterDef } from '../data/letters';
+import type { Keyboard } from '../input/keyboard';
 
 type Readable = Pick<LetterDef, 'title' | 'from' | 'to' | 'style' | 'postmark' | 'body' | 'signature' | 'hand'>;
 
@@ -48,6 +49,18 @@ export class LetterReader {
       </article>`;
     this.el.hidden = false;
     sound('paper');
+  }
+
+  /** Up and down scroll a long letter; confirm or cancel puts it away. */
+  update(input: Keyboard): void {
+    if (this.el.hidden) return;
+    if (input.wasPressed('confirm') || input.wasPressed('cancel')) {
+      this.close();
+      return;
+    }
+    const paper = this.el.querySelector<HTMLElement>('.reader');
+    const dir = input.wasPressed('up') ? -1 : input.wasPressed('down') ? 1 : 0;
+    if (paper && dir !== 0) paper.scrollTop += dir * Math.max(24, paper.clientHeight * 0.4);
   }
 
   close(): void {

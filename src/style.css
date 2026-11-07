@@ -144,10 +144,16 @@ canvas.screen.fractional {
   display: none;
 }
 
+/* The name plate sits on the box's top edge and grows upwards, so it never covers the text, whatever the text size. */
 .dialogue-name {
   position: absolute;
-  top: calc(var(--u) * -11);
+  bottom: calc(100% - var(--u) * 3);
   left: calc(var(--u) * 10);
+  max-width: calc(100% - var(--u) * 20);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.25;
   padding: calc(var(--u) * 1) calc(var(--u) * 8);
   font-size: calc(var(--tu) * 10);
   font-weight: 700;
@@ -158,6 +164,7 @@ canvas.screen.fractional {
 
 .dialogue.has-portrait .dialogue-name {
   left: calc(var(--u) * 106);
+  max-width: calc(100% - var(--u) * 116);
 }
 
 .dialogue-name[hidden] {
@@ -176,6 +183,8 @@ canvas.screen.fractional {
   margin: calc(var(--u) * 4) 0 0;
   padding: 0;
   font-size: calc(var(--tu) * 11);
+  max-height: calc(var(--u) * 150);
+  overflow-y: auto;
 }
 
 .dialogue-choices li {
@@ -213,13 +222,17 @@ canvas.screen.fractional {
 }
 
 /* Menus */
+/* A menu never runs off the screen: past its height cap, the list scrolls and the title stays. */
 .menu {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
   min-width: calc(var(--u) * 180);
   max-width: calc(100% - var(--u) * 24);
+  max-height: calc(100% - var(--u) * 16);
   padding: calc(var(--u) * 8) calc(var(--u) * 10);
   background: #f3ead6;
   border: calc(var(--u) * 2) solid #4a3a52;
@@ -228,18 +241,31 @@ canvas.screen.fractional {
 }
 
 .menu h2 {
+  flex: none;
   margin: 0 0 calc(var(--u) * 6);
   font-size: calc(var(--tu) * 12);
   color: #4a3a52;
 }
 
 .menu ol {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   list-style: none;
   margin: 0;
   padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #8a7a8e transparent;
+  /* Shadows at the top and bottom edges show there is more to scroll to. */
+  background:
+    linear-gradient(#f3ead6 30%, rgba(243, 234, 214, 0)) center top / 100% calc(var(--u) * 14) no-repeat local,
+    linear-gradient(rgba(243, 234, 214, 0), #f3ead6 70%) center bottom / 100% calc(var(--u) * 14) no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(74, 58, 82, 0.4), transparent) center top / 100% calc(var(--u) * 6) no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(74, 58, 82, 0.4), transparent) center bottom / 100% calc(var(--u) * 6) no-repeat scroll;
 }
 
 .menu li {
+  flex: none;
   display: flex;
   flex-direction: column;
   padding: calc(var(--u) * 3) calc(var(--u) * 8);
@@ -289,6 +315,7 @@ canvas.screen.fractional {
 .title-menu {
   top: auto;
   bottom: calc(var(--u) * 28);
+  max-height: calc(100% - var(--u) * 150);
   transform: translateX(-50%);
   text-align: center;
 }
@@ -588,7 +615,6 @@ canvas.pix {
   transform: none;
   min-width: calc(var(--u) * 150);
   max-height: calc(var(--u) * 200);
-  overflow-y: auto;
   padding: calc(var(--u) * 5) calc(var(--u) * 6);
 }
 
@@ -603,6 +629,7 @@ canvas.pix {
 }
 
 .battle-results {
+  overflow-y: auto;
   text-align: center;
   cursor: pointer;
 }
@@ -1026,8 +1053,60 @@ body.fullscreen .touch-full {
   display: none;
 }
 
-.touch-controls[data-mode='battle'] .touch-action {
+/* In menus, battle and dialogue choices: up and down on the left, OK and Back on the right. */
+.touch-back,
+.touch-nav {
   display: none;
+}
+
+.touch-controls[data-mode='menu'] .touch-nav,
+.touch-controls[data-mode='choice'] .touch-nav,
+.touch-controls[data-mode='battle'] .touch-nav,
+.touch-controls[data-mode='menu'] .touch-back,
+.touch-controls[data-mode='battle'] .touch-back {
+  display: flex;
+}
+
+/* Back does the menu button's job away from the field. */
+.touch-controls:not([data-mode='field']) .touch-menu {
+  display: none;
+}
+
+.touch-back {
+  right: calc(max(18px, env(safe-area-inset-right)) + 8px);
+  bottom: calc(max(22px, env(safe-area-inset-bottom)) + 80px);
+  width: 52px;
+  height: 52px;
+  font-size: 13px;
+}
+
+.touch-nav {
+  left: max(12px, env(safe-area-inset-left));
+  width: 56px;
+  height: 56px;
+}
+
+.touch-down {
+  bottom: max(22px, env(safe-area-inset-bottom));
+}
+
+.touch-up {
+  bottom: calc(max(22px, env(safe-area-inset-bottom)) + 68px);
+}
+
+.touch-nav i {
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 14px solid currentColor;
+  margin-top: -3px;
+}
+
+.touch-down i {
+  transform: rotate(180deg);
+  margin-top: 3px;
 }
 
 .stick-ghost,
@@ -1146,10 +1225,13 @@ body.touch .dialogue-choices li {
   padding-bottom: calc(var(--u) * 4);
 }
 
-/* On touch screens the battle commands sit in two columns, so all fit. */
+/* On touch screens the battle commands sit in two columns, so all fit. They run down
+   each column in turn, so the up and down buttons move the highlight up and down. */
 body.touch .battle-commands ol {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(var(--half, 5), auto);
+  grid-auto-flow: column;
   column-gap: calc(var(--u) * 4);
 }
 
@@ -1165,8 +1247,9 @@ body.touch .battle-menu {
 .reader,
 .letter-list,
 .letter-detail,
+.dialogue-choices,
 .menu,
-.battle-menu {
+.menu ol {
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;

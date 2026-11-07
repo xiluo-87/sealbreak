@@ -214,7 +214,7 @@ export class App {
       return;
     }
     if (this.reader.open) {
-      if (ctx.input.wasPressed('confirm') || ctx.input.wasPressed('cancel')) this.reader.close();
+      this.reader.update(ctx.input);
       return;
     }
     if (this.form) {
@@ -781,7 +781,7 @@ export class App {
   touchMode(): TouchMode {
     if (this.satchel || this.reader.open || this.menu || this.form || this.titleEl) return 'menu';
     if (this.scene instanceof BattleScene) return 'battle';
-    if (this.field && this.scene === this.field) return this.field.busy ? 'talk' : 'field';
+    if (this.field && this.scene === this.field) return this.field.choosing ? 'choice' : this.field.busy ? 'talk' : 'field';
     return 'menu';
   }
 

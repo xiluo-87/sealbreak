@@ -23,7 +23,7 @@ npm install
 npm run dev
 ```
 
-Arrow keys or WASD walk, Shift runs, Enter, Space or Z talks and confirms, and Esc or X opens the menu. On a phone, hold it sideways: drag anywhere on the left to walk, tap **Talk** to talk and confirm, and use the menu button at the top right. Menus and letters can be tapped directly.
+Arrow keys or WASD walk, Shift runs, Enter, Space or Z talks and confirms, and Esc or X opens the menu. On a phone, hold it sideways: drag anywhere on the left to walk, tap **Talk** to talk and confirm, and use the menu button at the top right. In menus and battle, the up and down buttons on the left move the highlight, **OK** confirms and **Back** goes back. Menus and letters can also be tapped directly, and long menus scroll.
 
 Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Use `?battle=road-hogs&level=3` to jump straight into a fight (`sorting-rats`, `road-goose`, `road-hogs` or `road-brigand`), and `?region=` to start in a region with the story so far: `thistle`, `thistle-road`, `gate`, `fen-road`, `fen`, `copperhill-road`, `copperhill`, `salt-road`, `salt`, `kingsend-road`, `kingsend`, or a detour: `abbey`, `oldfront` or `gulls`. `?level=…` and `?heat=…` work with both. Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs. `tests/balance.test.ts` is the balance bot: it plays the story with natural experience and reports encounters, levels and an estimated play time.
 
