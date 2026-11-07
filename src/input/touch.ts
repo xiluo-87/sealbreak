@@ -5,6 +5,7 @@
  * Back on the right, so every menu works the same way. They press the same
  * logical actions as the keyboard.
  */
+import { currentAdvice, HOME_SCREEN_TIP, isFullscreen, onFullscreenChange, toggleFullscreen } from '../ui/fullscreen';
 import type { Action, Keyboard } from './keyboard';
 
 /** What the screen is doing, which decides the controls shown. `choice` is dialogue waiting on a choice. */
@@ -23,10 +24,6 @@ export function stickDirection(dx: number, dy: number, deadZone = DEAD_ZONE): 'u
   if (Math.hypot(dx, dy) < deadZone) return null;
   if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
   return dy > 0 ? 'down' : 'up';
-}
-
-interface OrientationLock {
-  lock?: (orientation: string) => Promise<void>;
 }
 
 export class TouchControls {
@@ -73,10 +70,17 @@ export class TouchControls {
       e.preventDefault();
       this.setRunning(!this.running);
     });
-    const canFull = typeof document.documentElement.requestFullscreen === 'function' && document.fullscreenEnabled;
+    const advice = currentAdvice();
     for (const b of Array.from(this.el.querySelectorAll<HTMLButtonElement>('.touch-full, .rotate-full'))) {
-      if (!canFull) b.remove();
-      else b.addEventListener('click', () => void this.fullScreen());
+      if (advice !== 'button') b.remove();
+      else b.addEventListener('click', () => void toggleFullscreen());
+    }
+    // Safari on iPhone can't go full screen from a page; the Home Screen can.
+    if (advice === 'home-screen') {
+      const tip = document.createElement('p');
+      tip.className = 'rotate-tip';
+      tip.textContent = HOME_SCREEN_TIP;
+      this.el.querySelector('.rotate-hint')?.appendChild(tip);
     }
     this.el.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -85,7 +89,7 @@ export class TouchControls {
     window.addEventListener('pointermove', (e) => this.onMove(e), { passive: false });
     window.addEventListener('pointerup', (e) => this.onUp(e));
     window.addEventListener('pointercancel', (e) => this.onUp(e));
-    document.addEventListener('fullscreenchange', () => document.body.classList.toggle('fullscreen', !!document.fullscreenElement));
+    onFullscreenChange(() => document.body.classList.toggle('fullscreen', isFullscreen()));
   }
 
   /** Shows the controls; called on a coarse pointer or the first touch. */
@@ -197,17 +201,5 @@ export class TouchControls {
     if (this.dir) this.input.up(this.dir);
     this.dir = dir;
     if (dir) this.input.down(dir);
-  }
-
-  private async fullScreen(): Promise<void> {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else {
-        await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-        await (screen.orientation as unknown as OrientationLock).lock?.('landscape');
-      }
-    } catch {
-      // Not every browser allows full screen or an orientation lock; the game works without them.
-    }
   }
 }
