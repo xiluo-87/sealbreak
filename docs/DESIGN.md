@@ -174,7 +174,9 @@ Weather changes every 100 ticks. The current weather and the next two are always
 
 ### 6.3 Commands
 
-Attack, Letter (Carry), Break the Seal, Guard, Item, Run. **Deliver** also appears when the recipient of any undelivered letter, in a satchel or the sack, is in the fight. Delivering ends the battle peacefully.
+Attack, Skill (innate skills), Letter (Carry), Break the Seal, Guard, Item, Run. **Deliver** also appears when the recipient of any undelivered letter, in a satchel or the sack, is in the fight. Delivering ends the battle peacefully.
+
+Guard is a light action and halves damage taken until the guard's next turn. Ailments last 3 of the afflicted combatant's turns. Fear skips a turn half the time. Combatants start each fight a random 25–75% of one normal delay along the timeline.
 
 Damage: `max(1, round(power × ATK / (DEF + 10) × weather × random(0.9, 1.1)))`. Basic attacks have power 10. Letter attacks use WIL against the target's WIL instead of ATK and DEF.
 
@@ -189,9 +191,9 @@ Ailments are kept to three: **Slow** (timeline delays +50%), **Weak** (ATK −25
 | Fenn Harrow | 85 | 14 | 11 | 9 | 6 | 6 | Grief, Anger | Taunt, Shield Bash (toll-gate sign as a shield; can cause Slow) |
 | Juniper Quill | 48 | 20 | 9 | 4 | 14 | 8 | Debt, Threat | Pickpocket, False Signature (copies an enemy's last buff) |
 
-Per level, each gains about +8 HP, +2 FP, +1.5 ATK, +1 DEF, +0.5 SPD and +1 WIL, weighted toward their role. The level cap is 15, and the target is about level 12 at the final boss. Level *n* needs `12n + 3n²` XP. Everyone in the party shares XP equally, including those knocked out.
+Per level, each gains about +8 HP, +2 FP, +1.5 ATK, +1 DEF, +0.5 SPD and +1 WIL, weighted toward their role. The level cap is 15, and the target is about level 12 at the final boss. Level *n* needs a total of `12n + 3n²` XP (level 1 starts at 0). A battle's XP is split equally across the party, including those knocked out; delivery XP is not split.
 
-**Biscuit** has no HP and can't be targeted. Biscuit acts every third turn of the timeline: a headbutt (power 8, 50%), eating an enemy's held item (25%), or wandering about (25%). Items eaten by Biscuit sometimes come back later, slightly chewed. Giving Biscuit an apple adds one to a hidden trust counter.
+**Biscuit** has no HP and can't be targeted. Biscuit acts after every third turn of the timeline: a headbutt (power 8 with ATK 9, 50%), eating an enemy's held item (25%), or wandering about (25%). Items eaten by Biscuit sometimes come back later, slightly chewed. Giving Biscuit an apple adds one to a hidden trust counter.
 
 ## 7. Random encounters
 
@@ -251,6 +253,7 @@ Heat also changes the final act: at Heat 3 or below, Vane fights alone. At Heat 
 | Any | Any | Inspector | ×1.2 | ×1.1 | ×1.1 | ×1.1 | ×1.0 | ×1.5 | ×1 | Stats scale from the current region's toughest regular enemy |
 | Any | Any | Senior Inspector | ×1.8 | ×1.3 | ×1.2 | ×1.3 | ×1.1 | ×2.5 | ×2 | Appears from Heat 6 |
 | Any | Any | Runaway Parcel | 18 | 1 | 40 | 40 | 25 | 150 | 150 | Flees after 3 turns |
+| 0 | Thistle Cross | Sorting Room Rat | 12 | 5 | 2 | 1 | 11 | 6 | 1 | Tutorial only |
 
 ## 8. Bosses and scripted fights
 

@@ -5,7 +5,11 @@
  */
 import { DIRS, isDir } from '../field/dir';
 import type { RngState } from './rng';
-import { cleanName, type FlagValue, type GameState, PARTY_IDS, type PartyId, STATE_VERSION } from './state';
+import { START_COIN, START_ITEMS } from '../data/items';
+import { ITEMS } from '../data/items';
+import { statsAt } from '../data/party';
+import { xpForLevel, BALANCE } from '../data/balance';
+import { cleanName, type FlagValue, freshMember, type GameState, type MemberState, PARTY_IDS, type PartyId, STATE_VERSION } from './state';
 
 export const SAVE_KEY = 'sealbreak.save.v1';
 export const SLOT_IDS = ['auto', '1', '2', '3'] as const;
@@ -30,8 +34,18 @@ export interface StorageLike {
 /** Upgrades a state object from version N to N + 1. */
 export type Migration = (old: Record<string, unknown>) => Record<string, unknown>;
 
-/** No older versions have shipped yet. Add `1: (s) => ...` when version 2 arrives. */
-export const MIGRATIONS: Record<number, Migration> = {};
+/**
+ * Version 1 (Milestone 2) had no party progress, coin or items. Version 2
+ * adds them with starting values, everyone at level 1 and full health.
+ */
+export const MIGRATIONS: Record<number, Migration> = {
+  1: (old) => ({
+    ...old,
+    members: Object.fromEntries(PARTY_IDS.map((id) => [id, freshMember(id)])),
+    coin: START_COIN,
+    items: { ...START_ITEMS },
+  }),
+};
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -75,6 +89,29 @@ export function normalizeState(raw: unknown): GameState | null {
     c: finite(rng.c, 3) >>> 0,
     d: finite(rng.d, 4) >>> 0,
   };
+  const members = {} as Record<PartyId, MemberState>;
+  const rawMembers = isRecord(raw.members) ? raw.members : {};
+  for (const id of PARTY_IDS) {
+    const m = rawMembers[id];
+    if (!isRecord(m)) {
+      members[id] = freshMember(id);
+      continue;
+    }
+    const level = Math.min(BALANCE.levelCap, Math.max(1, Math.round(finite(m.level, 1))));
+    const stats = statsAt(id, level);
+    members[id] = {
+      level,
+      xp: Math.max(xpForLevel(level), Math.round(finite(m.xp, 0))),
+      hp: Math.min(stats.hp, Math.max(0, Math.round(finite(m.hp, stats.hp)))),
+      fp: Math.min(stats.fp, Math.max(0, Math.round(finite(m.fp, stats.fp)))),
+    };
+  }
+  const items: Record<string, number> = {};
+  if (isRecord(raw.items)) {
+    for (const [k, v] of Object.entries(raw.items)) {
+      if (ITEMS[k] && typeof v === 'number' && Number.isFinite(v) && v > 0) items[k] = Math.min(99, Math.floor(v));
+    }
+  }
   return {
     version: STATE_VERSION,
     rookieName: cleanName(typeof raw.rookieName === 'string' ? raw.rookieName : ''),
@@ -88,6 +125,9 @@ export function normalizeState(raw: unknown): GameState | null {
     steps: Math.max(0, Math.round(finite(raw.steps, 0))),
     playMs: Math.max(0, finite(raw.playMs, 0)),
     rng: rngState,
+    members,
+    coin: Math.max(0, Math.round(finite(raw.coin, START_COIN))),
+    items,
   };
 }
 
