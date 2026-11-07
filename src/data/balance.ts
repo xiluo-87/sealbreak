@@ -14,6 +14,8 @@ export const BALANCE = {
     windThreat: 1.5,
   },
   basicAttackPower: 10,
+  /** Hits from enemies of tier 2 and up are multiplied by this (design 6.3). */
+  enemyDamage: 1.25,
   damageSpread: [0.9, 1.1] as const,
   guardFactor: 0.5,
   ailments: {
@@ -52,9 +54,9 @@ export const BALANCE = {
   },
 } as const;
 
-/** Total XP needed to be at a level: 12n + 3n^2, with level 1 at zero. */
+/** Total XP needed to be at a level: 8n^2 + 12n, with level 1 at zero. */
 export function xpForLevel(level: number): number {
-  return level <= 1 ? 0 : 12 * level + 3 * level * level;
+  return level <= 1 ? 0 : 8 * level * level + 12 * level;
 }
 
 export function levelForXp(xp: number): number {

@@ -3,7 +3,7 @@
  * delivering. Pure functions over GameState.
  */
 import { ACCESSORIES } from '../data/accessories';
-import { BALANCE } from '../data/balance';
+import { BALANCE, levelForXp } from '../data/balance';
 import { ITEMS } from '../data/items';
 import { LETTER_BY_ID, type LetterDef, SLOTS_PER_MEMBER } from '../data/letters';
 import { MEMBERS, statsAt } from '../data/party';
@@ -126,7 +126,7 @@ export function deliver(game: GameState, id: string): DeliveryResult | null {
     const m = game.members[member];
     m.xp += BALANCE.deliveryXp;
     let level = m.level;
-    while (level < BALANCE.levelCap && m.xp >= 12 * (level + 1) + 3 * (level + 1) * (level + 1)) level++;
+    level = Math.max(level, levelForXp(m.xp));
     if (level > m.level) {
       const before = statsAt(member, m.level);
       const after = statsAt(member, level);

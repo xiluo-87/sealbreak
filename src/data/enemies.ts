@@ -89,7 +89,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     id: 'hog',
     name: 'Bramble Hog',
     tier: 1,
-    hp: 20,
+    hp: 26,
     atk: 7,
     def: 3,
     wil: 2,
@@ -108,7 +108,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     id: 'goose',
     name: 'Angry Goose',
     tier: 1,
-    hp: 14,
+    hp: 16,
     atk: 8,
     def: 2,
     wil: 2,
@@ -126,7 +126,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     id: 'brigand',
     name: 'Road Brigand',
     tier: 1,
-    hp: 26,
+    hp: 34,
     atk: 8,
     def: 4,
     wil: 3,
@@ -158,15 +158,15 @@ function foe(
 
 const MORE: EnemyDef[] = [
   // Tier 2, the Fen Road.
-  foe('leech', 'Leech Clump', 2, 4, [28, 9, 3, 4, 7, 18, 4], [
+  foe('leech', 'Leech Clump', 2, 4, [56, 9, 3, 4, 7, 18, 4], [
     { id: 'latch', name: 'Latch On', chance: 3, weight: 'normal', power: 10, drain: 0.5 },
     { id: 'squelch', name: 'Squelch', chance: 1, weight: 'normal', power: 8, inflict: { ailment: 'slow', chance: 0.3 } },
   ]),
-  foe('wisp', 'Marsh Wisp', 2, 4, [20, 6, 2, 12, 13, 20, 6], [
+  foe('wisp', 'Marsh Wisp', 2, 4, [40, 6, 2, 12, 13, 20, 6], [
     { id: 'glimmer', name: 'Glimmer', chance: 2, weight: 'normal', power: 12, magic: true, inflict: { ailment: 'fear', chance: 0.35 }, anim: 'cast' },
     { id: 'flicker', name: 'Flicker', chance: 1, weight: 'light', delay: 30, anim: 'cast' },
   ], { weakTo: 'love' }),
-  foe('reed', 'Reed Bandit', 2, 4, [36, 11, 5, 4, 10, 22, 12], [
+  foe('reed', 'Reed Bandit', 2, 4, [72, 11, 5, 4, 10, 22, 12], [
     { id: 'pike', name: 'Reed Pike', chance: 3, weight: 'normal', power: 11 },
     { id: 'ambush', name: 'Ambush', chance: 1, weight: 'light', power: 8 },
     { id: 'filch', name: 'Filch', chance: 1, weight: 'light', power: 5, stealCoin: [4, 10] },
@@ -176,15 +176,15 @@ const MORE: EnemyDef[] = [
     { id: 'whistle', name: 'Two Fingers, One Whistle', chance: 1, weight: 'light', summon: 'reed', anim: 'cast' },
   ], { recipient: 'L06' }),
   // Tier 3, the Copperhill Road.
-  foe('hound', 'Rust Hound', 3, 7, [40, 14, 6, 4, 14, 26, 8], [
+  foe('hound', 'Rust Hound', 3, 7, [80, 14, 6, 4, 14, 26, 8], [
     { id: 'bite', name: 'Bite', chance: 3, weight: 'normal', power: 11, inflict: { ailment: 'weak', chance: 0.35 } },
     { id: 'lunge', name: 'Lunge', chance: 1, weight: 'heavy', power: 15 },
   ]),
-  foe('slag', 'Slag Crawler', 3, 7, [60, 13, 12, 5, 5, 28, 10], [
+  foe('slag', 'Slag Crawler', 3, 7, [120, 13, 12, 5, 5, 28, 10], [
     { id: 'slam', name: 'Slag Slam', chance: 2, weight: 'heavy', power: 14 },
     { id: 'grind', name: 'Grind', chance: 2, weight: 'normal', power: 10, inflict: { ailment: 'slow', chance: 0.3 } },
   ]),
-  foe('thug', 'Company Thug', 3, 7, [46, 15, 7, 5, 9, 26, 18], [
+  foe('thug', 'Company Thug', 3, 7, [92, 15, 7, 5, 9, 26, 18], [
     { id: 'cosh', name: 'Cosh', chance: 3, weight: 'normal', power: 12 },
     { id: 'help', name: 'Whistle for Help', chance: 1, weight: 'light', summon: 'thug', anim: 'cast' },
   ], { held: 'loaf' }),
@@ -197,15 +197,15 @@ const MORE: EnemyDef[] = [
     { id: 'shift', name: 'Shift’s Over', chance: 1, weight: 'light', summon: 'thug', anim: 'cast' },
   ], { recipient: 'L10' }),
   // Tier 4, the Salt Road.
-  foe('crab', 'Salt Crab', 4, 9, [55, 16, 14, 6, 6, 32, 10], [
+  foe('crab', 'Salt Crab', 4, 9, [110, 16, 14, 6, 6, 32, 10], [
     { id: 'pinch', name: 'Pinch', chance: 3, weight: 'normal', power: 13 },
     { id: 'scuttle', name: 'Scuttle', chance: 1, weight: 'light', power: 9 },
   ], { counter: 0.35 }),
-  foe('gull', 'Gull Swarm', 4, 9, [34, 14, 4, 6, 17, 30, 6], [
+  foe('gull', 'Gull Swarm', 4, 9, [68, 14, 4, 6, 17, 30, 6], [
     { id: 'peck', name: 'Peck Storm', chance: 2, weight: 'light', power: 9 },
     { id: 'snatch', name: 'Snatch', chance: 1, weight: 'light', power: 5, stealItem: true },
   ]),
-  foe('raider', 'Dune Raider', 4, 9, [60, 18, 9, 7, 11, 34, 24], [
+  foe('raider', 'Dune Raider', 4, 9, [120, 18, 9, 7, 11, 34, 24], [
     { id: 'scimitar', name: 'Scimitar', chance: 3, weight: 'normal', power: 13 },
     { id: 'sand', name: 'Sand in the Eyes', chance: 1, weight: 'light', power: 6, inflict: { ailment: 'weak', chance: 0.4 } },
   ], { windAtk: 1.4 }),
@@ -214,11 +214,11 @@ const MORE: EnemyDef[] = [
     { id: 'rally', name: 'Raiders, To Me!', chance: 1, weight: 'light', summon: 'raider', anim: 'cast' },
   ], { windAtk: 1.4, recipient: 'L12' }),
   // Tier 5, the Kingsend Road.
-  foe('wire', 'Wire Crawler', 5, 11, [70, 20, 12, 10, 13, 40, 18], [
+  foe('wire', 'Wire Crawler', 5, 11, [140, 20, 12, 10, 13, 40, 18], [
     { id: 'spark', name: 'Spark', chance: 2, weight: 'normal', power: 13, magic: true, anim: 'cast' },
     { id: 'coil', name: 'Coil', chance: 2, weight: 'normal', power: 12, inflict: { ailment: 'slow', chance: 0.35 } },
   ], { rainWeakness: 1.5 }),
-  foe('guard', 'Royal Guard', 5, 11, [85, 22, 15, 9, 9, 42, 26], [
+  foe('guard', 'Royal Guard', 5, 11, [170, 22, 15, 9, 9, 42, 26], [
     { id: 'halberd', name: 'Halberd', chance: 3, weight: 'normal', power: 13 },
     { id: 'wall', name: 'Shield Wall', chance: 1, weight: 'light', guardAllies: true, anim: 'cast' },
   ]),
@@ -231,12 +231,12 @@ const MORE: EnemyDef[] = [
     { id: 'ledger', name: 'Ledger Swat', chance: 2, weight: 'normal', power: 10 },
     { id: 'surcharge', name: 'Surcharge', chance: 1, weight: 'light', power: 4, stealCoin: [5, 10] },
   ]),
-  foe('grist', 'Bailiff Grist', 2, 6, [180, 13, 7, 8, 9, 150, 60], [
+  foe('grist', 'Bailiff Grist', 2, 6, [180, 13, 7, 8, 14, 150, 60], [
     { id: 'gavel', name: 'Gavel', chance: 3, weight: 'normal', power: 14 },
     { id: 'fine', name: 'Fined!', chance: 2, weight: 'normal', power: 6, stealCoin: [8, 16], inflict: { ailment: 'weak', chance: 0.5 }, anim: 'cast' },
     { id: 'writ', name: 'Writ of Distraint', chance: 1, weight: 'heavy', power: 8, all: true, anim: 'cast', below: 0.6 },
   ], { boss: true }),
-  foe('brass', 'Old Brass', 3, 8, [380, 16, 14, 6, 7, 300, 0], [
+  foe('brass', 'Old Brass', 3, 8, [380, 19, 14, 6, 11, 300, 0], [
     { id: 'piston', name: 'Piston', chance: 3, weight: 'heavy', power: 18 },
     { id: 'bombardment', name: 'Bombardment', chance: 2, weight: 'heavy', power: 12, all: true, anim: 'cast' },
     { id: 'steam', name: 'Steam Vent', chance: 1, weight: 'normal', power: 5, all: true, inflict: { ailment: 'slow', chance: 0.4 }, anim: 'cast' },
@@ -250,7 +250,7 @@ const MORE: EnemyDef[] = [
     { id: 'procedure', name: 'Procedure', chance: 1, weight: 'light', delay: 40, anim: 'cast' },
     { id: 'book', name: 'By the Book', chance: 1, weight: 'light', rally: 1.25, anim: 'cast', below: 0.5 },
   ], { boss: true, inspector: true }),
-  foe('vane', 'Chief Inspector Vane', 5, 12, [1100, 22, 16, 18, 14, 0, 0], [
+  foe('vane', 'Chief Inspector Vane', 5, 12, [1100, 22, 16, 18, 17, 0, 0], [
     { id: 'stamp', name: 'Stamp', chance: 3, weight: 'normal', power: 14, inflict: { ailment: 'weak', chance: 0.4 }, above: 0.6 },
     { id: 'countersign', name: 'Countersign', chance: 2, weight: 'normal', power: 10, inflict: { ailment: 'slow', chance: 0.5 }, anim: 'cast', above: 0.6 },
     { id: 'confiscate', name: 'Confiscate', chance: 2, weight: 'normal', confiscate: true, anim: 'cast', below: 0.6, above: 0.3 },

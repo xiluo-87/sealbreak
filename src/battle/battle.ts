@@ -3,7 +3,7 @@
  * seeded Rng. The scene asks whose turn it is, picks an action (from the
  * player, the enemy AI or auto-battle), and plays back the returned events.
  */
-import { BALANCE } from '../data/balance';
+import { BALANCE, levelForXp } from '../data/balance';
 import { ENCOUNTERS, ENEMIES, type EncounterDef, type EnemyMove, getEncounter } from '../data/enemies';
 import { LETTER_BY_ID } from '../data/letters';
 import { ITEMS } from '../data/items';
@@ -391,6 +391,8 @@ export class Battle {
     const d = magic ? target.wil : this.defOf(target);
     const weather = this.weatherAt(this.time);
     let mult = weather === 'clear' ? BALANCE.weather.clearAttack : 1;
+    // Past the first road, enemies hit harder than the bare formula, so a full party still has to look after itself.
+    if (attacker.side === 'enemy' && (ENEMIES[attacker.id]?.tier ?? 0) >= 2) mult *= BALANCE.enemyDamage;
     if (weather === 'wind' && !magic) mult *= ENEMIES[attacker.id]?.windAtk ?? 1;
     if (weather === 'rain' && target.side === 'enemy') mult *= ENEMIES[target.id]?.rainWeakness ?? 1;
     if (target.guarding) {
@@ -914,7 +916,7 @@ export class Battle {
       if (this.result !== 'victory') continue;
       m.xp += results.xpEach;
       let level = m.level;
-      while (level < BALANCE.levelCap && m.xp >= 12 * (level + 1) + 3 * (level + 1) * (level + 1)) level++;
+      level = Math.max(level, levelForXp(m.xp));
       if (level > m.level) {
         const before = statsAt(id, m.level);
         const after = statsAt(id, level);

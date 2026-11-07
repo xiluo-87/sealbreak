@@ -2,6 +2,7 @@
  * Conditions read story flags and party state; effects change them. Both are
  * plain data so dialogue, maps and cutscenes can be checked in tests.
  */
+import { xpForLevel } from '../data/balance';
 import { statsAt } from '../data/party';
 import { assign, deliver, type DeliveryResult } from '../letters/letters';
 import { type FlagValue, type GameState, type LetterState, PARTY_IDS, type PartyId } from './state';
@@ -157,7 +158,7 @@ export function catchUp(s: GameState, id: PartyId): void {
   if (m.level >= target) return;
   const st = statsAt(id, target);
   m.level = target;
-  m.xp = Math.max(m.xp, 12 * target + 3 * target * target);
+  m.xp = Math.max(m.xp, xpForLevel(target));
   m.hp = st.hp;
   m.fp = st.fp;
 }

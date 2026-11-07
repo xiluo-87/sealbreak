@@ -136,7 +136,7 @@ describe('delivering', () => {
   it('says what was actually received, and never promises the full amount for an opened letter', () => {
     const a = newGame('Ada', 's');
     a.party = ['rookie', 'odile'];
-    a.members.rookie.xp = 10;
+    a.members.rookie.xp = 30;
     const full = deliver(a, 'L02');
     expect(full && deliveryNotice('L02', full, 'Ada')).toEqual([
       'Delivered “Final Demand”.',

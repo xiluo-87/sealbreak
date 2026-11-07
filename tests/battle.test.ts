@@ -243,12 +243,12 @@ describe('a whole fight', () => {
 });
 
 describe('levels', () => {
-  it('needs 12n + 3n^2 XP in total for level n', () => {
+  it('needs 8n^2 + 12n XP in total for level n', () => {
     expect(xpForLevel(1)).toBe(0);
-    expect(xpForLevel(2)).toBe(36);
-    expect(xpForLevel(12)).toBe(576);
-    expect(levelForXp(35)).toBe(1);
-    expect(levelForXp(36)).toBe(2);
+    expect(xpForLevel(2)).toBe(56);
+    expect(xpForLevel(12)).toBe(1296);
+    expect(levelForXp(55)).toBe(1);
+    expect(levelForXp(56)).toBe(2);
     expect(levelForXp(100000)).toBe(BALANCE.levelCap);
   });
 
@@ -259,7 +259,7 @@ describe('levels', () => {
 
   it('levels up after enough wins', () => {
     const g = game(['rookie']);
-    g.members.rookie.xp = 30;
+    g.members.rookie.xp = 50;
     const b = new Battle(g, 'road-hogs', 7);
     playOut(b, (x) => x.autoAction(x.current()));
     const r = b.applyResults(g);

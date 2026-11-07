@@ -179,7 +179,7 @@ Attack, Skill (innate skills), Letter (Carry), Break the Seal, Guard, Item, Run.
 
 Guard is a light action and halves damage taken until the guard's next turn. Ailments last 3 of the afflicted combatant's turns. Fear skips a turn half the time. Combatants start each fight a random 25–75% of one normal delay along the timeline.
 
-Damage: `max(1, round(power × ATK / (DEF + 10) × weather × random(0.9, 1.1)))`. Basic attacks have power 10. Letter attacks use WIL against the target's WIL instead of ATK and DEF.
+Damage: `max(1, round(power × ATK / (DEF + 10) × weather × random(0.9, 1.1)))`. Basic attacks have power 10. Letter attacks use WIL against the target's WIL instead of ATK and DEF. Enemies of tier 2 and up deal 1.25 times this, so that a full party still has to look after itself.
 
 Ailments are kept to three: **Slow** (timeline delays +50%), **Weak** (ATK −25%) and **Fear** (the target may lose its turn). Knocked-out allies can be revived with items or skills, and all recover at 1 HP after a win. If all four fall, the player restarts from the last save.
 
@@ -192,7 +192,7 @@ Ailments are kept to three: **Slow** (timeline delays +50%), **Weak** (ATK −25
 | Fenn Harrow | 85 | 14 | 11 | 9 | 6 | 6 | Grief, Anger | Taunt, Shield Bash (toll-gate sign as a shield; can cause Slow) |
 | Juniper Quill | 48 | 20 | 9 | 4 | 14 | 8 | Debt, Threat | Pickpocket, False Signature (copies an enemy's last buff) |
 
-Per level, each gains about +8 HP, +2 FP, +1.5 ATK, +1 DEF, +0.5 SPD and +1 WIL, weighted toward their role. Fenn and Juniper join at one level below the Rookie, so nobody has to grind to catch them up. The level cap is 15, and the target is about level 12 at the final boss. Level *n* needs a total of `12n + 3n²` XP (level 1 starts at 0). A battle's XP is split equally across the party, including those knocked out; delivery XP is not split.
+Per level, each gains about +8 HP, +2 FP, +1.5 ATK, +1 DEF, +0.5 SPD and +1 WIL, weighted toward their role. Fenn and Juniper join at one level below the Rookie, so nobody has to grind to catch them up. The level cap is 15, and the target is about level 12 at the final boss. Level *n* needs a total of `8n² + 12n` XP (level 1 starts at 0). A battle's XP is split equally across the party, including those knocked out; delivery XP is not split.
 
 **Biscuit** has no HP and can't be targeted. Biscuit acts after every third turn of the timeline: a headbutt (power 8 with ATK 9, 50%), eating an enemy's held item (25%), or wandering about (25%). Items eaten by Biscuit sometimes come back later, slightly chewed. Giving Biscuit an apple adds one to a hidden trust counter.
 
@@ -237,20 +237,20 @@ Heat also changes the final act: at Heat 3 or below, Vane fights alone. At Heat 
 
 | Tier | Region | Enemy | HP | ATK | DEF | WIL | SPD | XP | Coin | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Thistle Road | Bramble Hog | 20 | 7 | 3 | 2 | 8 | 10 | 4 | Charges |
-| 1 | | Angry Goose | 14 | 8 | 2 | 2 | 14 | 10 | 2 | Honk delays one ally |
-| 1 | | Road Brigand | 26 | 8 | 4 | 3 | 9 | 14 | 8 | Steals coin |
-| 2 | Fen Road | Leech Clump | 28 | 9 | 3 | 4 | 7 | 18 | 4 | Drains HP |
-| 2 | | Marsh Wisp | 20 | 6 | 2 | 12 | 13 | 20 | 6 | Fear, weak to Love: reading any Love letter near one hurts it |
-| 2 | | Reed Bandit | 36 | 11 | 5 | 4 | 10 | 22 | 12 | Comes in groups |
-| 3 | Copperhill Road | Rust Hound | 40 | 14 | 6 | 4 | 14 | 26 | 8 | Bites cause Weak |
-| 3 | | Slag Crawler | 60 | 13 | 12 | 5 | 5 | 28 | 10 | High DEF, low WIL |
-| 3 | | Company Thug | 46 | 15 | 7 | 5 | 9 | 26 | 18 | Calls for help |
-| 4 | Salt Road | Salt Crab | 55 | 16 | 14 | 6 | 6 | 32 | 10 | Counterattacks |
-| 4 | | Gull Swarm | 34 | 14 | 4 | 6 | 17 | 30 | 6 | Steals items |
-| 4 | | Dune Raider | 60 | 18 | 9 | 7 | 11 | 34 | 24 | Hits hard in Wind |
-| 5 | Kingsend Road | Wire Crawler | 70 | 20 | 12 | 10 | 13 | 40 | 18 | Weak to Rain |
-| 5 | | Royal Guard | 85 | 22 | 15 | 9 | 9 | 42 | 26 | Guards allies |
+| 1 | Thistle Road | Bramble Hog | 26 | 7 | 3 | 2 | 8 | 10 | 4 | Charges |
+| 1 | | Angry Goose | 16 | 8 | 2 | 2 | 14 | 10 | 2 | Honk delays one ally |
+| 1 | | Road Brigand | 34 | 8 | 4 | 3 | 9 | 14 | 8 | Steals coin |
+| 2 | Fen Road | Leech Clump | 56 | 9 | 3 | 4 | 7 | 18 | 4 | Drains HP |
+| 2 | | Marsh Wisp | 40 | 6 | 2 | 12 | 13 | 20 | 6 | Fear, weak to Love: reading any Love letter near one hurts it |
+| 2 | | Reed Bandit | 72 | 11 | 5 | 4 | 10 | 22 | 12 | Comes in groups |
+| 3 | Copperhill Road | Rust Hound | 80 | 14 | 6 | 4 | 14 | 26 | 8 | Bites cause Weak |
+| 3 | | Slag Crawler | 120 | 13 | 12 | 5 | 5 | 28 | 10 | High DEF, low WIL |
+| 3 | | Company Thug | 92 | 15 | 7 | 5 | 9 | 26 | 18 | Calls for help |
+| 4 | Salt Road | Salt Crab | 110 | 16 | 14 | 6 | 6 | 32 | 10 | Counterattacks |
+| 4 | | Gull Swarm | 68 | 14 | 4 | 6 | 17 | 30 | 6 | Steals items |
+| 4 | | Dune Raider | 120 | 18 | 9 | 7 | 11 | 34 | 24 | Hits hard in Wind |
+| 5 | Kingsend Road | Wire Crawler | 140 | 20 | 12 | 10 | 13 | 40 | 18 | Weak to Rain |
+| 5 | | Royal Guard | 170 | 22 | 15 | 9 | 9 | 42 | 26 | Guards allies |
 | Any | Any | Inspector | ×1.2 | ×1.1 | ×1.1 | ×1.1 | ×1.0 | ×1.5 | ×1 | Stats scale from the current region's toughest regular enemy |
 | Any | Any | Senior Inspector | ×1.8 | ×1.3 | ×1.2 | ×1.3 | ×1.1 | ×2.5 | ×2 | Appears from Heat 6 |
 | Any | Any | Runaway Parcel | 18 | 1 | 40 | 40 | 25 | 150 | 150 | Flees after 3 turns |

@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Action, Battle } from '../src/battle/battle';
 import { statsAt } from '../src/data/party';
+import { xpForLevel } from '../src/data/balance';
 import { applyAll } from '../src/game/conditions';
 import { type EndingId, selectEnding } from '../src/game/endings';
 import { basicTactics, cutscene, type Director, fight, type Log, newLog, preferring, talk } from '../src/game/headless';
@@ -59,7 +60,7 @@ function director(plan: Plan): Director {
 function strong(s: GameState, level: number): void {
   for (const id of PARTY_IDS) {
     const st = statsAt(id, level);
-    s.members[id] = { level, xp: 12 * level + 3 * level * level, hp: st.hp, fp: st.fp };
+    s.members[id] = { level, xp: xpForLevel(level), hp: st.hp, fp: st.fp };
   }
 }
 
