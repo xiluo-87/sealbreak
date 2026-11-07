@@ -1,0 +1,53 @@
+import type { MapDef } from '../../field/maps';
+
+/** Gull's Rest, a detour from the Salt Road: the cliff path, the stairs, and the lighthouse. */
+export const GULLS_REST: MapDef = {
+  id: 'gulls-rest',
+  name: 'Gull’s Rest',
+  kind: 'road',
+  region: 'gulls',
+  buildings: { N: { id: 'lighthouse', name: 'Gull’s Rest light' }, R: { id: 'house', name: 'Keeper’s cottage' } },
+  grid: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'T.T.TT.Tt...T.T.TTT.TT.TT.,TTTT.TTTT...T.TTT.TT.T.T...T..T.TT.TT',
+    'T....................T.t...T...................................T',
+    'TT............T.^........^.^..................,.......NNN......T',
+    'TT..^.......,.....,...,.............,............^....NNN......T',
+    'TT...^^....^......,______________________....,T.......NNN.RRRR.T',
+    'TTt.^.t..........,.______________________,,...........NNN.RRRR.T',
+    'TT.................__...,....,......,^.__.............NDN.RDRR.T',
+    'T.......^........,.__.............^....__.....###..............T',
+    'TT...^^........t...__.....,,.......T.,.__..t..###.^............T',
+    'TT.................__.,..t......,..T...__.....###...........^..T',
+    'T.......,..,.......__.................^__.,...###..............T',
+    'T....,.............__..t..TT.t.........__.....###..............T',
+    '_____________________.......t..........__..,..###...........T.TT',
+    '_____________________.......T..T.t..T.^_______###....,....t...TT',
+    'T......^..,.........^,.......^...T....._________...........t..TT',
+    'T...........,....,.,......t......T.....,,....,..........T....TTT',
+    'T...~~~~~~~~~~~~........,................~~~~~~~~~~~~~.........T',
+    'T~~~~~~~~~~~~~~~~~~...T.........t.....~~~~~~~~~~~~~~~~~~~......T',
+    'T~~~~~~~~~~~~~~~~~~~~~...........,t~~~~~~~~~~~~~~~~~~~~~~~~~...T',
+    'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
+    'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
+    'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
+    'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
+    'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  exits: [
+    { x: 0, y: 13, to: 'salt-town', toX: 30, toY: 1, facing: 'down', travel: 'return' },
+    { x: 0, y: 14, to: 'salt-town', toX: 30, toY: 1, facing: 'down', travel: 'return' },
+  ],
+  npcs: [
+    { id: 'ines', sprite: 'ines', x: 55, y: 8, facing: 'down', dialogue: 'ines' },
+    { id: 'barnaby', sprite: 'barnaby', x: 52, y: 9, facing: 'right', dialogue: 'barnaby' },
+  ],
+  events: [
+    { id: 'gulls-arrive', on: 'enter', if: { notFlag: 'gulls.seen' }, dialogue: 'gulls-arrive' },
+    { id: 'stairs-a', on: 'step', x: 46, y: 11, if: { all: [{ notFlag: 'stairs.won' }, { notFlag: 'stairs.dodged' }] }, dialogue: 'stairs' },
+    { id: 'stairs-b', on: 'step', x: 47, y: 11, if: { all: [{ notFlag: 'stairs.won' }, { notFlag: 'stairs.dodged' }] }, dialogue: 'stairs' },
+    { id: 'stairs-c', on: 'step', x: 48, y: 11, if: { all: [{ notFlag: 'stairs.won' }, { notFlag: 'stairs.dodged' }] }, dialogue: 'stairs' },
+    { id: 'light-door', on: 'interact', x: 55, y: 7, dialogue: 'ines' },
+  ],
+};

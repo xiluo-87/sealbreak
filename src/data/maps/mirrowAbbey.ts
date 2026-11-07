@@ -1,0 +1,55 @@
+import type { MapDef } from '../../field/maps';
+
+/** Mirrow Abbey, a day's detour from the Fen: a path through the woods to the cloister, the library and the crypt. */
+export const MIRROW_ABBEY: MapDef = {
+  id: 'mirrow-abbey',
+  name: 'Mirrow Abbey',
+  kind: 'road',
+  region: 'abbey',
+  buildings: {
+    C: { id: 'abbey', name: 'Mirrow Abbey' },
+    K: { id: 'abbey', name: 'The library' },
+    E: { id: 'mine', name: 'The crypt' },
+  },
+  grid: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'TT.T..TTT.....TTTT...TTT.T..TT..TT....TTTTTT.TT.TTT.T.,.TT..TTTT',
+    'TTt....T.........................,T.......T.........t....T,...TT',
+    'T,...........,.....,............,......t..,....................T',
+    'T.T..TT,.......________________.,.......tt.....CCCCCCCCCC.KKKK.T',
+    'T...T....T.....________________...t...T..T.T...CCCCCCCCCC.KKKK.T',
+    'T......T.T.....__.,,....,,,..__....,.....Tt....CCCCCCCCCC.KKKK.T',
+    'TT......T...T..__,....,...,..__.....T.....,....CCCCCCCCCC.KDKK.T',
+    'T...........T.,__............__.,T.............CCCCDCCCCC......T',
+    'T........,...,.__....,.......__.,,t.......__===================T',
+    'T....,,.......,__.,t........,__...t.......__...===========.....T',
+    'T........,...,.__.,..........__......T..,.__...===========.....T',
+    '_________________.,.,.....t..__.......t...__...==......===.....T',
+    '_________________............__,........,.__...==..o...===.....T',
+    'T...........,.,.,............__....,T...,.__...==......===.....T',
+    'T.,......,................T..__,.,....,,,,__...===========EEEE.T',
+    'T....,......,,..T,.......T.,.__,...,.,,...__...===========EEEE.T',
+    'TT.......TT.................._______________.............=EDEE.T',
+    'T.,....T...T....T............_______________..+...+...+........T',
+    'TT.....t......tT......T..........,,...,....,....+...+...+......T',
+    'TTT.Tt...,....T......,......,........,....,...+...+...+........T',
+    'TT.........TT.......T................T..,.,T...................T',
+    'TT.TT.TT.TTTTTTTT.TTT.T..TT.T.T.TTT..TTTT......................T',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  exits: [
+    { x: 0, y: 12, to: 'bellwether-fen', toX: 46, toY: 14, facing: 'left', travel: 'return' },
+    { x: 0, y: 13, to: 'bellwether-fen', toX: 46, toY: 14, facing: 'left', travel: 'return' },
+  ],
+  npcs: [
+    { id: 'anselm', sprite: 'anselm', x: 52, y: 10, facing: 'down', dialogue: 'anselm' },
+    { id: 'librarian', sprite: 'librarian', x: 60, y: 8, facing: 'down', dialogue: 'librarian' },
+    { id: 'novice', sprite: 'novice', x: 50, y: 15, facing: 'right', dialogue: 'novice' },
+  ],
+  events: [
+    { id: 'abbey-arrive', on: 'enter', if: { notFlag: 'abbey.seen' }, dialogue: 'abbey-arrive' },
+    { id: 'crypt-door', on: 'interact', x: 59, y: 17, dialogue: 'crypt-door' },
+    { id: 'library-door', on: 'interact', x: 59, y: 7, dialogue: 'archive' },
+    { id: 'church-door', on: 'interact', x: 51, y: 8, dialogue: 'abbey-church' },
+  ],
+};

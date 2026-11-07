@@ -147,7 +147,7 @@ Hand: **R** means the letter is real, and **F** means it was forged (see section
 | L20 | Returned Library Book (Very Overdue) | Hal Tolliver → Abbey library | R | Debt | Overdue (damage over time) / Forty Years' Fine (scales with the current day) | Archive access: Odile's war record, a major clue |
 | L21 | To Whoever Finds Us | Squad Seven → Anyone, the Old Front | R | Grief | Roll Call (party DEF up) / All Present | Upgrades Fenn's Guard and improves his ending |
 | L22 | You Still Owe Me Two Shillings | Cpl. Hale → Pvt. Moss, hermit at the Old Front | R | Debt | Two Shillings / Paid in Full | Moss's map: marks every remaining recipient on the road map |
-| L23 | Keep the Light On | Mate Dove → Keeper Ines Dove, Gull's Rest | F | Love | Beacon / Safe Harbour | Sea charts: Salt Road encounters −25% |
+| L23 | Keep the Light On | Mate Dove → Keeper Ines Dove, Gull's Rest | F | Love | Beacon / Safe Harbour | Sea charts: encounters on the coast road to Kingsend −25% (the Salt Road is already behind you) |
 | L24 | I Am Not Dead | Barnaby Lisk → his family | R | Joy | Good News / Still Here | Barnaby is the lighthouse assistant and just never wrote again. He comes along for one scene, then gives you a rare accessory |
 
 Key items outside the sack, which cannot be used as skills:

@@ -104,6 +104,7 @@ export const REGIONS: Record<string, RegionDef> = {
     gain: 1.5,
     groups: [g(3, 'wire'), g(2, 'wire', 'wire'), g(2, 'guard'), g(2, 'guard', 'wire'), g(1, 'guard', 'guard')],
     events: ['wire-lunch', 'peddler', 'toll', 'wedding'],
+    quieter: { flag: 'charts.salt', mult: 0.75 },
     repelPrice: 65,
     inspectors: 'kingsend',
   },

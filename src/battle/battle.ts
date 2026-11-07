@@ -393,7 +393,11 @@ export class Battle {
     let mult = weather === 'clear' ? BALANCE.weather.clearAttack : 1;
     if (weather === 'wind' && !magic) mult *= ENEMIES[attacker.id]?.windAtk ?? 1;
     if (weather === 'rain' && target.side === 'enemy') mult *= ENEMIES[target.id]?.rainWeakness ?? 1;
-    if (target.guarding) mult *= this.weatherAt(this.time) === 'rain' ? BALANCE.guardFactor / BALANCE.weather.rainSupport : BALANCE.guardFactor;
+    if (target.guarding) {
+      // Squad Seven's roll call steadies Fenn: his Guard stops more.
+      const factor = target.id === 'fenn' && this.game.flags['fenn.squad'] ? BALANCE.guardFactor * 0.6 : BALANCE.guardFactor;
+      mult *= this.weatherAt(this.time) === 'rain' ? factor / BALANCE.weather.rainSupport : factor;
+    }
     const spread = this.rng.range(BALANCE.damageSpread[0], BALANCE.damageSpread[1]);
     return Math.max(1, Math.round(((power * a) / (d + 10)) * mult * spread));
   }

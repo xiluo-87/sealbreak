@@ -543,7 +543,7 @@ export const LETTERS: LetterDef[] = [
     tone: 'love',
     carry: 'Beacon',
     burst: 'Safe Harbour',
-    reward: { flags: ['charts.salt'], note: 'Ines gives you her sea charts. The Salt Road will be quieter.' },
+    reward: { flags: ['charts.salt'], note: 'Ines gives you her sea charts. The coast road to Kingsend will be quieter.' },
     style: 'elegant',
     postmark: 'SHIP’S POST',
     body: [

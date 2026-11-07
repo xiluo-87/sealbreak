@@ -73,3 +73,17 @@ describe('travel and the seven-day clock', () => {
     expect(officeInspectors(g)).toBe(3);
   });
 });
+
+describe('places on the road', () => {
+  it('puts every stop and detour on a walkable tile', async () => {
+    const { MAPS } = await import('../src/data/maps');
+    const { parseMap, solidAt } = await import('../src/field/maps');
+    const { STOPS, DETOURS } = await import('../src/data/world');
+    const places = [...Object.values(STOPS).flatMap((s) => [s.hub, ...(s.arrive ? [s.arrive] : [])]), ...Object.values(DETOURS).map((d) => d.arrive)];
+    for (const p of places) {
+      const m = MAPS[p.map];
+      expect(m, p.map).toBeDefined();
+      if (m) expect(solidAt(parseMap(m), p.x, p.y), `${p.map} ${p.x},${p.y}`).toBe(false);
+    }
+  });
+});

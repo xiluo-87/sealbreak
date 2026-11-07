@@ -39,6 +39,13 @@ export const JOURNEY_FOLK: FolkSpec[] = [
   { id: 'kinn', name: 'Innkeeper', build: 'stout', skin: '#d8a888', hair: '#3a2e26', hairStyle: 'short', top: '#7a5a3a', topStyle: 'shirt', bottom: '#4a3e34', shoes: '#2e2620', apron: '#e8e0cc', extras: ['moustache'] },
   { id: 'pip', name: 'Pip', build: 'child', skin: '#f0c8a8', hair: '#c8784a', hairStyle: 'curly', top: '#d8a040', topStyle: 'shirt', bottom: '#4a5a8a', shoes: '#3a2e26' },
   { id: 'hqclerk', name: 'Post clerk', build: 'slim', skin: '#e8c8b0', hair: '#3a3230', hairStyle: 'short', top: '#3d4a6a', topStyle: 'jacket', bottom: '#2f3a52', shoes: '#1e1e24', hat: { style: 'flatcap', colour: '#3d4a6a' }, extras: ['glasses'] },
+  // The detours.
+  { id: 'anselm', name: 'Sister Anselm', build: 'slim', skin: '#ecc8b0', hair: '#c8c4bc', hairStyle: 'bun', top: '#4a4a5a', topStyle: 'dress', bottom: '#3a3a48', skirt: true, shoes: '#2a2830', hat: { style: 'bonnet', colour: '#e8e4dc' }, extras: ['chain'] },
+  { id: 'librarian', name: 'Brother Tolliver', build: 'stout', skin: '#f0c8b0', hair: '#8a8478', hairStyle: 'bald', top: '#6a5a4a', topStyle: 'long', bottom: '#5a4a3a', shoes: '#3a2e26', extras: ['glasses', 'ledger'] },
+  { id: 'novice', name: 'Novice', build: 'slim', skin: '#d8a888', hair: '#3a2e26', hairStyle: 'short', top: '#7a6a58', topStyle: 'long', bottom: '#6a5a48', shoes: '#3a2e26' },
+  { id: 'moss', name: 'Private Moss', build: 'slim', skin: '#c89070', hair: '#d8d4cc', hairStyle: 'curly', top: '#6a6a48', topStyle: 'jacket', bottom: '#5a5040', shoes: '#3a3226', extras: ['beard', 'stoop', 'patches'] },
+  { id: 'ines', name: 'Keeper Ines Dove', build: 'average', skin: '#d8a888', hair: '#8a6a5a', hairStyle: 'tied', top: '#2e4a6a', topStyle: 'jacket', bottom: '#3a3a48', shoes: '#2a2620', extras: ['toolbelt'] },
+  { id: 'barnaby', name: 'Barnaby Lisk', build: 'tall', skin: '#e8b898', hair: '#a8784a', hairStyle: 'curly', top: '#e8dcc0', topStyle: 'shirt', bottom: '#4a4a5a', shoes: '#3a2e26', extras: ['stubble'] },
 ];
 
 export const JOURNEY_FOLK_SPRITES = JOURNEY_FOLK.map(folkSprites);

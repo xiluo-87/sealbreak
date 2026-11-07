@@ -5,8 +5,9 @@ import { FEN_DIALOGUE } from './fen';
 import { ROAD_DIALOGUE } from './road';
 import { SALT_DIALOGUE } from './salt';
 import { KINGSEND_DIALOGUE } from './kingsend';
+import { DETOUR_DIALOGUE } from './detours';
 import { THISTLE_CROSS_DIALOGUE } from './thistleCross';
 
-const ALL: Dialogue[] = [...THISTLE_CROSS_DIALOGUE, ...ROAD_DIALOGUE, ...FEN_DIALOGUE, ...COPPERHILL_DIALOGUE, ...SALT_DIALOGUE, ...KINGSEND_DIALOGUE, ...CAMP_DIALOGUE];
+const ALL: Dialogue[] = [...THISTLE_CROSS_DIALOGUE, ...ROAD_DIALOGUE, ...FEN_DIALOGUE, ...COPPERHILL_DIALOGUE, ...SALT_DIALOGUE, ...KINGSEND_DIALOGUE, ...DETOUR_DIALOGUE, ...CAMP_DIALOGUE];
 
 export const DIALOGUE: Record<string, Dialogue> = Object.fromEntries(ALL.map((d) => [d.id, d]));

@@ -30,7 +30,7 @@ import { officeInspectors } from '../game/travel';
 import { officeEncounter } from '../data/enemies';
 import { EndingScreen } from './ending';
 import { returnFromDetour, type TravelOption, travel, travelOptions } from '../game/travel';
-import { DEADLINE_DAY, type DetourId, DETOURS, type Place, type StopId, STOPS } from '../data/world';
+import { DEADLINE_DAY, type DetourId, DETOURS, LETTER_PLACES, type Place, type StopId, STOPS } from '../data/world';
 import { INNS, innPrice, priceOf, SHOPS, stockOf } from '../data/shops';
 import { DIALOGUE } from '../data/dialogue';
 import { LetterReader } from './letterReader';
@@ -52,6 +52,9 @@ const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facin
   salt: { mapId: 'salt-town', x: 1, y: 12, facing: 'right' },
   'kingsend-road': { mapId: 'kingsend-road', x: 1, y: 11, facing: 'right' },
   kingsend: { mapId: 'kingsend', x: 1, y: 13, facing: 'right' },
+  abbey: { mapId: 'mirrow-abbey', x: 1, y: 12, facing: 'right' },
+  oldfront: { mapId: 'old-front', x: 1, y: 12, facing: 'right' },
+  gulls: { mapId: 'gulls-rest', x: 1, y: 14, facing: 'right' },
 };
 
 /** Story so far for each debug start: party, day, stop and flags. */
@@ -65,9 +68,19 @@ const REGION_STORY: Record<string, { party: PartyId[]; day: number; stop?: strin
   copperhill: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen'] },
   'salt-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past'] },
   salt: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'] },
+  abbey: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'fen', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'detour.abbey', 'away'] },
+  oldfront: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'detour.oldfront', 'away'] },
+  gulls: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 5, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen', 'salt.arrived', 'harbour.ambush', 'sorrel.beaten', 'reveal.done', 'detour.gulls', 'away'] },
   'kingsend-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 5, stop: 'kingsend', flags: [...['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'], 'salt.arrived', 'harbour.ambush', 'sorrel.beaten', 'reveal.done', 'reached.kingsend'] },
   kingsend: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 5, stop: 'kingsend', flags: [...['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'], 'salt.arrived', 'harbour.ambush', 'sorrel.beaten', 'reveal.done', 'reached.kingsend', 'kingsend.roadSeen'] },
 };
+
+/** With Moss's map, the road menu shows how many letters are waiting at each place. */
+function mossNote(state: GameState, place: StopId | DetourId): string {
+  if (!state.flags['moss.map']) return '';
+  const n = (LETTER_PLACES[place] ?? []).filter((id) => state.letters[id]?.state !== 'delivered').length;
+  return n === 0 ? ' · Moss’s map: nobody left to deliver to' : ` · Moss’s map: ${n} letter${n === 1 ? '' : 's'} to deliver`;
+}
 
 function playTime(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -342,7 +355,7 @@ export class App {
     const opts = travelOptions(state).filter((o) => !!MAPS[o.kind === 'next' ? (STOPS[o.to as StopId].arrive?.map ?? '') : DETOURS[o.to as DetourId].arrive.map]);
     const items: MenuItem[] = opts.map((o) => ({
       label: `${o.kind === 'detour' ? 'Detour: ' : ''}${o.name}`,
-      detail: `${o.days === 0 ? 'No days' : o.days === 1 ? '1 day' : `${o.days} days`} · ${o.blurb}${o.late ? ' · Kingsend would be out of reach by the seventh day' : ''}`,
+      detail: `${o.days === 0 ? 'No days' : o.days === 1 ? '1 day' : `${o.days} days`} · ${o.blurb}${mossNote(state, o.to as StopId | DetourId)}${o.late ? ' · Kingsend would be out of reach by the seventh day' : ''}`,
       action: () => (o.late ? this.confirmLate(state, o, back) : this.showCamp(state, o)),
     }));
     items.push({ label: 'Not yet', action: () => back() });

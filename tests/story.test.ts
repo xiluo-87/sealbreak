@@ -10,7 +10,7 @@ import { applyAll } from '../src/game/conditions';
 import { type EndingId, selectEnding } from '../src/game/endings';
 import { basicTactics, cutscene, type Director, fight, type Log, newLog, preferring, talk } from '../src/game/headless';
 import { type GameState, newGame, PARTY_IDS } from '../src/game/state';
-import { travel, travelOptions } from '../src/game/travel';
+import { returnFromDetour, travel, travelOptions } from '../src/game/travel';
 import { breakSeal } from '../src/letters/letters';
 import { endingPages } from '../src/data/endings';
 
@@ -24,6 +24,8 @@ interface Plan {
   /** Dawdle so Kingsend is out of reach. */
   late: boolean;
   truth: boolean;
+  /** Take every detour (Gull's Rest by Brin's boat). */
+  detours?: boolean;
 }
 
 function director(plan: Plan): Director {
@@ -70,6 +72,12 @@ function rest(s: GameState): void {
   }
 }
 
+function detour(s: GameState, to: string): void {
+  const o = travelOptions(s).find((x) => x.kind === 'detour' && x.to === to);
+  if (!o) throw new Error(`no detour to ${to}`);
+  travel(s, o);
+}
+
 function next(s: GameState): void {
   const o = travelOptions(s).find((x) => x.kind === 'next');
   if (!o) throw new Error('no road on');
@@ -96,9 +104,20 @@ function play(plan: Plan): { state: GameState; ending: EndingId; log: Log } {
   next(s);
   // Bellwether Fen.
   go('fen', 'fen-road-start', 'fight:hob', 'cut:fen-arrive', 'lockup-window', 'grist', 'bea', 'sal', 'elsie');
+  if (plan.detours) {
+    detour(s, 'abbey');
+    go('abbey', 'abbey-arrive', 'anselm', 'librarian', 'archive', 'crypt-door');
+    returnFromDetour(s);
+  }
   next(s);
   // Copperhill.
-  go('copperhill', 'cop-road-start', 'fight:hask', 'cut:cop-arrive', 'brannigan', 'brannigan', 'dunnock', 'tarn', 'cut:brass', 'cut:memorial-fenn');
+  go('copperhill', 'cop-road-start', 'fight:hask', 'cut:cop-arrive', 'brannigan', 'brannigan', 'dunnock', 'tarn', 'cut:brass');
+  if (plan.detours) {
+    detour(s, 'oldfront');
+    go('oldfront', 'front-arrive', 'moss', 'squad-marker');
+    returnFromDetour(s);
+  }
+  go('copperhill', 'cut:memorial-fenn');
   // Some players open letters along the way.
   const toOpen = ['L19', 'L20', 'L21', 'L22', 'L23', 'L24', 'L16', 'L17', 'L14'].slice(0, plan.openSeals);
   for (const id of toOpen) if (s.letters[id]?.state !== 'delivered') breakSeal(s, id);
@@ -106,6 +125,11 @@ function play(plan: Plan): { state: GameState; ending: EndingId; log: Log } {
   next(s);
   // The Salt Road.
   go('salt', 'salt-road-start', 'fight:wick', 'salt-arrive', 'quay', 'brin', 'cut:ambush', 'mara', 'camp');
+  if (plan.detours) {
+    detour(s, 'gulls');
+    go('gulls', 'gulls-arrive', 'stairs', 'ines', 'barnaby');
+    returnFromDetour(s);
+  }
   if (plan.late) s.day = 7;
   next(s);
   if (!s.flags['reached.kingsend']) return { state: s, ending: selectEnding(s), log };
@@ -157,6 +181,18 @@ describe('a headless playthrough', () => {
     const { ending, log } = play({ ...base, deliverL18: false });
     expect(log.fights.find((f) => f.id === 'vane')?.result).toBe('victory');
     expect(ending).toBe('furnace');
+  });
+
+  it('takes every detour, Gull’s Rest by Brin’s boat, delivers all 24 and still makes Kingsend by day 7', () => {
+    const { state, ending } = play({ ...base, detours: true });
+    expect(state.day).toBe(7);
+    expect(Object.values(state.letters).every((l) => l.state === 'delivered')).toBe(true);
+    expect(state.flags['fenn.squad']).toBe(true);
+    expect(state.flags['moss.map']).toBe(true);
+    expect(state.flags['archive.access']).toBe(true);
+    expect(ending).toBe('lastpost');
+    const text = endingPages(state, ending).flatMap((p) => p.lines).join(' ');
+    expect(text).toContain('answers for himself');
   });
 
   it('remembers telling the truth, and the epilogue says so', () => {
