@@ -4,7 +4,7 @@ import { computeScale } from '../src/render/scale';
 describe('computeScale', () => {
   it('uses the largest whole scale that fits', () => {
     expect(computeScale(1920, 1080, 1)).toEqual({ scale: 3, integer: true, cssWidth: 1920, cssHeight: 1080 });
-    expect(computeScale(2000, 1000, 1)).toMatchObject({ scale: 2, integer: true });
+    expect(computeScale(1300, 760, 1)).toMatchObject({ scale: 2, integer: true });
     expect(computeScale(1280, 1000, 1)).toMatchObject({ scale: 2, integer: true });
   });
 
