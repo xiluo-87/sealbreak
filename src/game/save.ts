@@ -9,7 +9,9 @@ import { START_COIN, START_ITEMS } from '../data/items';
 import { ITEMS } from '../data/items';
 import { statsAt } from '../data/party';
 import { xpForLevel, BALANCE } from '../data/balance';
-import { cleanName, type FlagValue, freshMember, type GameState, type MemberState, PARTY_IDS, type PartyId, STATE_VERSION } from './state';
+import { ACCESSORIES } from '../data/accessories';
+import { LETTERS, START_WAX } from '../data/letters';
+import { cleanName, type FlagValue, freshExtras, freshMember, type GameState, type LetterProgress, type LetterState, type MemberState, PARTY_IDS, type PartyId, STATE_VERSION } from './state';
 
 export const SAVE_KEY = 'sealbreak.save.v1';
 export const SLOT_IDS = ['auto', '1', '2', '3'] as const;
@@ -45,7 +47,11 @@ export const MIGRATIONS: Record<number, Migration> = {
     coin: START_COIN,
     items: { ...START_ITEMS },
   }),
+  /** Version 3 adds the letters, Heat, wax sticks and accessories. */
+  2: (old) => ({ ...old, ...freshExtras() }),
 };
+
+const LETTER_STATES: readonly LetterState[] = ['sealed', 'opened', 'resealed', 'delivered'];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -112,6 +118,27 @@ export function normalizeState(raw: unknown): GameState | null {
       if (ITEMS[k] && typeof v === 'number' && Number.isFinite(v) && v > 0) items[k] = Math.min(99, Math.floor(v));
     }
   }
+  const letters: Record<string, LetterProgress> = {};
+  const rawLetters = isRecord(raw.letters) ? raw.letters : {};
+  const carried = new Map<PartyId, number>();
+  for (const l of LETTERS) {
+    const r = rawLetters[l.id];
+    const state = isRecord(r) && LETTER_STATES.includes(r.state as LetterState) ? (r.state as LetterState) : 'sealed';
+    let holder = isRecord(r) && PARTY_IDS.includes(r.holder as PartyId) ? (r.holder as PartyId) : null;
+    if (holder && (state === 'delivered' || (carried.get(holder) ?? 0) >= 3)) holder = null;
+    if (holder) carried.set(holder, (carried.get(holder) ?? 0) + 1);
+    const broken = state === 'opened' || state === 'resealed' || (isRecord(r) && r.broken === true);
+    letters[l.id] = broken ? { state, holder, broken } : { state, holder };
+  }
+  const acc = isRecord(raw.accessories) ? raw.accessories : {};
+  const owned = Array.isArray(acc.owned) ? [...new Set(acc.owned.filter((a): a is string => typeof a === 'string' && !!ACCESSORIES[a]))] : [];
+  const equipped: Partial<Record<PartyId, string>> = {};
+  if (isRecord(acc.equipped)) {
+    for (const id of PARTY_IDS) {
+      const a = acc.equipped[id];
+      if (typeof a === 'string' && owned.includes(a) && !Object.values(equipped).includes(a)) equipped[id] = a;
+    }
+  }
   return {
     version: STATE_VERSION,
     rookieName: cleanName(typeof raw.rookieName === 'string' ? raw.rookieName : ''),
@@ -128,6 +155,10 @@ export function normalizeState(raw: unknown): GameState | null {
     members,
     coin: Math.max(0, Math.round(finite(raw.coin, START_COIN))),
     items,
+    letters,
+    heat: Math.max(0, Math.round(finite(raw.heat, 0))),
+    wax: Math.max(0, Math.min(START_WAX, Math.round(finite(raw.wax, START_WAX)))),
+    accessories: { owned, equipped },
   };
 }
 

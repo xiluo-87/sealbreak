@@ -3,7 +3,7 @@ import { type Action, Battle } from '../src/battle/battle';
 import { BALANCE, levelForXp, xpForLevel } from '../src/data/balance';
 import { statsAt } from '../src/data/party';
 import { migrate, normalizeState } from '../src/game/save';
-import { type GameState, newGame } from '../src/game/state';
+import { type GameState, newGame, STATE_VERSION } from '../src/game/state';
 
 function game(party: ('rookie' | 'odile')[] = ['rookie', 'odile'], biscuit = false): GameState {
   const g = newGame('Ada', 'seed');
@@ -269,11 +269,12 @@ describe('levels', () => {
   });
 });
 
-describe('save migration to version 2', () => {
+describe('save migrations', () => {
   it('adds party progress, coin and items to version 1 saves', () => {
     const v1 = { version: 1, mapId: 'thistle-cross', x: 3, y: 4, facing: 'up', flags: { 'intro.done': true }, party: ['rookie', 'odile'], rookieName: 'Ada' };
     const s = normalizeState(migrate(v1));
-    expect(s?.version).toBe(2);
+    expect(s?.version).toBe(STATE_VERSION);
+    expect(s?.letters.L01?.state).toBe('sealed');
     expect(s?.members.odile.level).toBe(1);
     expect(s?.members.odile.hp).toBe(statsAt('odile', 1).hp);
     expect(s?.items['repel-bell']).toBe(1);

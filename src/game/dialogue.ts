@@ -5,7 +5,7 @@
  * either offers choices or moves on to `next`.
  */
 import type { Expression } from '../sprites/characters/portraitKit';
-import { applyAll, check, type Condition, type Effect } from './conditions';
+import { applyAll, check, type Condition, type Effect, type Outbox } from './conditions';
 import type { GameState } from './state';
 
 export type SpeakerId = string;
@@ -55,6 +55,8 @@ export class DialogueRun {
   private node: DialogueNode | null = null;
   private lineIndex = 0;
   done = false;
+  /** Deliveries and other results of this conversation's effects. */
+  readonly out: Outbox = { deliveries: [] };
 
   constructor(
     readonly dialogue: Dialogue,
@@ -116,15 +118,15 @@ export class DialogueRun {
     if (this.done || !this.node) return;
     const choice = this.node.choices?.[index];
     if (!choice || !check(choice.if, this.state)) return;
-    applyAll(this.node.then, this.state);
-    applyAll(choice.then, this.state);
+    applyAll(this.node.then, this.state, this.out);
+    applyAll(choice.then, this.state, this.out);
     this.enter(choice.next);
   }
 
   private finishNode(): void {
     const node = this.node;
     if (!node) return;
-    applyAll(node.then, this.state);
+    applyAll(node.then, this.state, this.out);
     this.enter(node.next);
   }
 }

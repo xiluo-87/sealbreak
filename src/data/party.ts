@@ -57,6 +57,19 @@ export const MEMBERS: Record<PartyId, MemberDef> = {
   },
 };
 
+/** Stats at a level plus an accessory's bonus. */
+export function statsWith(id: PartyId, level: number, bonus: Partial<Stats> = {}): Stats {
+  const s = statsAt(id, level);
+  return {
+    hp: s.hp + (bonus.hp ?? 0),
+    fp: s.fp + (bonus.fp ?? 0),
+    atk: s.atk + (bonus.atk ?? 0),
+    def: s.def + (bonus.def ?? 0),
+    spd: s.spd + (bonus.spd ?? 0),
+    wil: s.wil + (bonus.wil ?? 0),
+  };
+}
+
 export function statsAt(id: PartyId, level: number): Stats {
   const m = MEMBERS[id];
   const k = Math.max(0, level - 1);
