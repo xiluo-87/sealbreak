@@ -16,4 +16,5 @@ export const SPEAKERS: Record<string, Speaker> = {
   dray: { name: 'Mrs. Dray' },
   wireman: { name: 'Wireman' },
   tib: { name: 'Tib' },
+  brigand: { name: 'Road Brigand' },
 };

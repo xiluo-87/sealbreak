@@ -36,6 +36,15 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
     ],
     [{ set: 'intro.sackFell' }],
   ),
+  simple('office-rats', [
+    narrate('The sack twitches. Something inside it squeaks.'),
+    say('odile', 'Rats. In the HELD sack. Of course there are.', 'angry'),
+    say('odile', 'Senior Courier, I believe this is your department.', 'neutral'),
+  ]),
+  simple('office-after-rats', [
+    say('odile', 'Well swung. You’ll do.', 'happy'),
+    say('odile', 'Now. Let’s see what they were nesting in.', 'neutral'),
+  ]),
   simple('office-2', [
     say('odile', 'Now where did you come from?', 'surprised'),
     say('odile', 'It’s tagged HELD. Twenty-four letters, never sent.', 'neutral'),
@@ -206,6 +215,13 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
   ),
 
   // Thistle Road.
+  simple('goose-appears', [narrate('A goose steps out of the hedge and looks at you as if you owe it money.')]),
+  simple('hogs-appear', [narrate('Two hogs come crashing out of the brambles, wearing most of them.')]),
+  simple('brigand-appears', [
+    say('brigand', 'Hold it there. Your money or your letters.'),
+    say('rookie', 'The letters aren’t mine to give.', 'neutral'),
+    say('brigand', 'Then I’ll take the money. And the goose takes whatever it likes. It’s that sort of goose.'),
+  ]),
   simple(
     'road-start',
     [

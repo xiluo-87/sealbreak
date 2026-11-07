@@ -13,7 +13,8 @@ export type CutStep =
   | { wait: number }
   | { then: Effect[] }
   | { fade: 'out' | 'in' }
-  | { warp: { map: string; x: number; y: number; facing: Dir } };
+  | { warp: { map: string; x: number; y: number; facing: Dir } }
+  | { battle: string };
 
 export interface Cutscene {
   id: string;
@@ -22,6 +23,10 @@ export interface Cutscene {
 
 export function cutsceneDialogues(c: Cutscene): string[] {
   return c.steps.flatMap((s) => ('say' in s ? [s.say] : []));
+}
+
+export function cutsceneBattles(c: Cutscene): string[] {
+  return c.steps.flatMap((s) => ('battle' in s ? [s.battle] : []));
 }
 
 export function cutsceneEffects(c: Cutscene): Effect[] {

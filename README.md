@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** Milestone 2 (field) is done. You can name the Rookie, walk around Thistle Cross, talk to the townsfolk, play the opening scene at the post office, set off with Odile and Biscuit up the Thistle Road as far as the toll gate, and save or load from three slots plus an autosave. Battles and letters come next.
+**Status:** Milestone 3 (battle core) is done. The opening now includes a tutorial fight, and the first stretch of the Thistle Road has three fixed fights. Battles have the timeline, weather forecast, skills, items, guarding, running, ailments, auto-battle, XP and levels, and Biscuit. Letters and their skills come next, in Milestone 4.
 
 ## The idea
 
@@ -25,7 +25,7 @@ npm run dev
 
 Arrow keys or WASD walk, Shift runs, Enter, Space or Z talks and confirms, and Esc or X opens the menu.
 
-Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
+Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Use `?battle=road-hogs&level=3` to jump straight into a fight (`sorting-rats`, `road-goose`, `road-hogs` or `road-brigand`). Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
 
 ## Tech
 

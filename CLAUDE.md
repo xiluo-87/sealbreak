@@ -4,7 +4,7 @@ A short browser RPG where every skill comes from a letter you can carry, open or
 
 ## Current state
 
-Milestones 0 to 2 are done: the sprite pipeline (see `docs/SPRITES.md`), and the field with Thistle Cross, the opening office scene, dialogue with story flags and save/load. Thistle Road is a stub that ends at the toll gate until Milestone 5. Next up is Milestone 3, the battle core.
+Milestones 0 to 3 are done: the sprite pipeline (see `docs/SPRITES.md`), the field with Thistle Cross, the opening office scene, dialogue with story flags and save/load, and the battle core in `src/battle/`. Thistle Road is a stub that ends at the toll gate, with three fixed fights standing in for random encounters until Milestone 5. Next up is Milestone 4, letters.
 
 ## Tech rules
 

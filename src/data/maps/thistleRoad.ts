@@ -1,4 +1,9 @@
-import type { MapDef } from '../../field/maps';
+import type { EventDef, MapDef } from '../../field/maps';
+
+/** Fixed fights across the road until random encounters arrive in Milestone 5. */
+function roadFight(id: string, x: number, wonFlag: string): EventDef[] {
+  return [6, 7].map((y) => ({ id: `${id}-${y}`, on: 'step' as const, x, y, if: { notFlag: wonFlag }, cutscene: id }));
+}
 
 /**
  * The first stretch of the Thistle Road, as far as the toll gate. The rest of
@@ -35,5 +40,8 @@ export const THISTLE_ROAD: MapDef = {
     { id: 'tollgate', on: 'interact', x: 24, y: 6, dialogue: 'tollgate' },
     { id: 'tollgate-2', on: 'interact', x: 24, y: 7, dialogue: 'tollgate' },
     { id: 'tollbooth', on: 'interact', x: 25, y: 5, dialogue: 'tollgate' },
+    ...roadFight('road-goose', 7, 'road.gooseBeaten'),
+    ...roadFight('road-hogs', 13, 'road.hogsBeaten'),
+    ...roadFight('road-brigand', 19, 'road.brigandBeaten'),
   ],
 };

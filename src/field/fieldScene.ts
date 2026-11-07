@@ -25,6 +25,8 @@ export interface FieldHooks {
   /** Called on entering a town and after cutscenes that end in one. */
   autosave(state: GameState): void;
   openMenu(): void;
+  /** Starts a battle; `done` runs when the party is back in the field. */
+  battle(encounter: string, done: (result: 'victory' | 'fled') => void): void;
 }
 
 interface Npc {
@@ -57,6 +59,7 @@ export class FieldScene implements Scene {
   private fadeTo = 0;
   private warp: { exit: ExitDef; phase: 'out' | 'in' } | null = null;
   private stepMs = WALK_MS_PER_TILE;
+  private inBattle = false;
 
   constructor(
     readonly state: GameState,
@@ -70,7 +73,7 @@ export class FieldScene implements Scene {
 
   /** True while the player is free to walk and open the menu. */
   get idle(): boolean {
-    return !this.dialogue && !this.cutscene && !this.warp && this.fade === 0;
+    return !this.dialogue && !this.cutscene && !this.warp && !this.inBattle && this.fade === 0;
   }
 
   destroy(): void {
@@ -141,6 +144,12 @@ export class FieldScene implements Scene {
     if (!ev) return false;
     if (ev.cutscene) this.startCutscene(ev.cutscene);
     else if (ev.dialogue) this.say(ev.dialogue, () => undefined);
+    else if (ev.battle) {
+      this.inBattle = true;
+      this.hooks.battle(ev.battle, () => {
+        this.inBattle = false;
+      });
+    }
     return true;
   }
 
@@ -263,6 +272,15 @@ export class FieldScene implements Scene {
         this.fadeTo = step.fade === 'out' ? 1 : 0;
       }
       if (this.fade === this.fadeTo) next();
+    } else if ('battle' in step) {
+      if (!run.started) {
+        run.started = true;
+        this.inBattle = true;
+        this.hooks.battle(step.battle, () => {
+          this.inBattle = false;
+          next();
+        });
+      }
     } else {
       const w = step.warp;
       this.loadMap(w.map, w.x, w.y, w.facing, false);

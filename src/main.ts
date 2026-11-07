@@ -16,7 +16,7 @@ function startGame(root: HTMLElement): void {
   input.attach(window);
   const rng = new Rng(options.seed);
   const clock = new FixedStepClock({ speed: options.speed });
-  const app = new App(screen.ui, options.seed);
+  const app = new App(screen.ui, options.seed, { ...(options.battle ? { battle: options.battle } : {}), ...(options.level ? { level: options.level } : {}) });
   const ctx = { input, rng, stepMs: clock.stepMs };
 
   startLoop(clock, {

@@ -2,14 +2,20 @@
  * Glue between scenes and menus: the title screen, new game and naming,
  * the field, the pause menu and save slots.
  */
+import { BattleScene } from '../battle/battleScene';
+import { ENCOUNTERS } from '../data/enemies';
+import { ITEMS } from '../data/items';
 import { MAPS } from '../data/maps';
+import { MEMBERS } from '../data/party';
+import { statsAt } from '../data/party';
+import { xpForLevel } from '../data/balance';
 import { THISTLE_CROSS } from '../data/maps/thistleCross';
 import { FieldScene } from '../field/fieldScene';
 import { parseMap } from '../field/maps';
 import { TILE } from '../field/movement';
 import { browserStorage, latestSlot, readSaves, SLOT_IDS, type SlotId, type StorageLike, writeSlot } from '../game/save';
 import type { Scene, SceneContext } from '../game/scene';
-import { DEFAULT_NAME, type GameState, MAX_NAME_LENGTH, newGame } from '../game/state';
+import { DEFAULT_NAME, type GameState, MAX_NAME_LENGTH, newGame, PARTY_IDS } from '../game/state';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { paintGround } from '../render/tileArt';
 import { ListMenu, type MenuItem } from './menu';
@@ -61,11 +67,30 @@ export class App {
   constructor(
     private readonly ui: HTMLElement,
     private readonly seed: string,
+    debug: { battle?: string; level?: number } = {},
   ) {
     this.storage = browserStorage();
     this.toast = new Toast(ui);
     this.scene = new TitleScene();
-    this.showTitle();
+    if (debug.battle && ENCOUNTERS[debug.battle]) this.debugBattle(debug.battle, debug.level ?? 1);
+    else this.showTitle();
+  }
+
+  /** `?battle=<id>&level=<n>`: straight into a fight on the Thistle Road, for testing and balance. */
+  private debugBattle(encounter: string, level: number): void {
+    const s = newGame(DEFAULT_NAME, this.seed);
+    Object.assign(s.flags, { 'intro.arrived': true, 'intro.done': true, 'biscuit.joined': true, 'road.seen': true });
+    s.party = ['rookie', 'odile'];
+    for (const id of PARTY_IDS) {
+      const st = statsAt(id, level);
+      s.members[id] = { level, xp: xpForLevel(level), hp: st.hp, fp: st.fp };
+    }
+    s.mapId = 'thistle-road';
+    s.x = 4;
+    s.y = 6;
+    s.facing = 'right';
+    this.startField(s);
+    this.startBattle(encounter, () => undefined);
   }
 
   /** Called every fixed step. Menus take input before the scene does. */
@@ -77,7 +102,7 @@ export class App {
     }
     if (this.menu) {
       this.menu.update(ctx.input);
-      if (this.field) return;
+      if (this.field && this.scene === this.field) return;
     }
     this.scene.update(ctx);
   }
@@ -147,9 +172,42 @@ export class App {
         if (writeSlot(this.storage, 'auto', s, Date.now())) this.toast.show('Saved');
       },
       openMenu: () => this.showPause(),
+      battle: (id, done) => this.startBattle(id, done),
     });
     this.field = field;
     this.scene = field;
+  }
+
+  private startBattle(encounter: string, done: (result: 'victory' | 'fled') => void): void {
+    const field = this.field;
+    if (!field) return;
+    const enc = ENCOUNTERS[encounter];
+    const battle = new BattleScene(field.state, encounter, this.ui, {
+      onEnd: (result) => {
+        battle.destroy();
+        if (result === 'defeat') {
+          this.showGameOver();
+          return;
+        }
+        if (result === 'victory' && enc?.wonFlag) field.state.flags[enc.wonFlag] = true;
+        this.scene = field;
+        done(result);
+      },
+    });
+    this.scene = battle;
+  }
+
+  private showGameOver(): void {
+    this.clearUi();
+    this.field?.destroy();
+    this.field = null;
+    this.scene = new TitleScene();
+    const latest = latestSlot(this.storage);
+    const s = latest ? readSaves(this.storage).slots[latest]?.state : undefined;
+    const items: MenuItem[] = [];
+    if (s) items.push({ label: 'Try again', detail: slotDetail(s), action: () => this.startField(s) });
+    items.push({ label: 'Title screen', action: () => this.showTitle() });
+    this.menu = new ListMenu(this.ui, 'The party has fallen', items, undefined, 'menu gameover-menu');
   }
 
   private showPause(): void {
@@ -162,12 +220,61 @@ export class App {
       'Paused',
       [
         { label: 'Resume', action: close },
+        { label: 'Party', detail: this.partySummary(field.state), action: () => this.showItems(field.state) },
         { label: 'Save game', action: () => this.showSave(field.state) },
         { label: 'Load game', action: () => this.showLoad(() => this.showPause()) },
         { label: 'Title screen', action: () => this.showTitle() },
       ],
       close,
     );
+  }
+
+  private partySummary(state: GameState): string {
+    return state.party
+      .map((id) => {
+        const m = state.members[id];
+        const st = statsAt(id, m.level);
+        return `${MEMBERS[id].name.replace('{name}', state.rookieName)} Lv ${m.level} ${m.hp}/${st.hp}`;
+      })
+      .join(' · ') + ` · ${state.coin} coin`;
+  }
+
+  /** Use healing items outside battle. */
+  private showItems(state: GameState): void {
+    this.clearUi();
+    const usable = Object.entries(state.items).filter(([id, n]) => n > 0 && ITEMS[id]?.battle);
+    const items: MenuItem[] = usable.map(([id, n]) => ({
+      label: `${ITEMS[id]?.name ?? id} ×${n}`,
+      detail: ITEMS[id]?.description ?? '',
+      action: () => this.showItemTarget(state, id),
+    }));
+    if (items.length === 0) items.push({ label: 'Nothing to use', disabled: true, action: () => undefined });
+    this.menu = new ListMenu(this.ui, this.partySummary(state), items, () => this.showPause());
+  }
+
+  private showItemTarget(state: GameState, itemId: string): void {
+    this.clearUi();
+    const it = ITEMS[itemId];
+    const items: MenuItem[] = state.party.map((id) => {
+      const m = state.members[id];
+      const st = statsAt(id, m.level);
+      const can = it?.revive ? m.hp === 0 : m.hp > 0 && ((it?.heal ?? 0) > 0 ? m.hp < st.hp : (it?.restoreFp ?? 0) > 0 && m.fp < st.fp);
+      return {
+        label: MEMBERS[id].name.replace('{name}', state.rookieName),
+        detail: `${m.hp}/${st.hp} HP · ${m.fp}/${st.fp} FP`,
+        disabled: !can,
+        action: () => {
+          if (it?.revive) m.hp = Math.max(1, Math.round(st.hp / 4));
+          if (it?.heal) m.hp = Math.min(st.hp, m.hp + it.heal);
+          if (it?.restoreFp) m.fp = Math.min(st.fp, m.fp + it.restoreFp);
+          const left = (state.items[itemId] ?? 0) - 1;
+          state.items = Object.fromEntries(Object.entries({ ...state.items, [itemId]: left }).filter(([, v]) => v > 0));
+          this.toast.show(`Used ${it?.name ?? itemId}`);
+          this.showItems(state);
+        },
+      };
+    });
+    this.menu = new ListMenu(this.ui, `Use ${it?.name ?? itemId} on…`, items, () => this.showItems(state));
   }
 
   private showSave(state: GameState): void {

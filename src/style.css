@@ -435,3 +435,182 @@ canvas.pix {
   color: var(--muted);
   max-width: 128px;
 }
+
+/* Battle */
+.battle-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.battle-ui > * {
+  pointer-events: auto;
+}
+
+.battle-msg {
+  position: absolute;
+  top: calc(var(--u) * 42);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - var(--u) * 40);
+  padding: calc(var(--u) * 2) calc(var(--u) * 10);
+  font-size: calc(var(--u) * 10);
+  color: #f3ead6;
+  background: rgba(30, 24, 40, 0.75);
+  border-radius: calc(var(--u) * 3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.battle-msg[hidden] {
+  display: none;
+}
+
+.battle-party {
+  position: absolute;
+  right: calc(var(--u) * 8);
+  bottom: calc(var(--u) * 8);
+  display: flex;
+  gap: calc(var(--u) * 4);
+  pointer-events: none;
+}
+
+.pm {
+  width: calc(var(--u) * 96);
+  padding: calc(var(--u) * 3) calc(var(--u) * 5);
+  background: rgba(243, 234, 214, 0.94);
+  border: calc(var(--u) * 1) solid #4a3a52;
+  border-radius: calc(var(--u) * 3);
+  font-size: calc(var(--u) * 8);
+}
+
+.pm.current {
+  border-color: #d3a648;
+  box-shadow: 0 0 0 calc(var(--u) * 1) #d3a648;
+}
+
+.pm.ko {
+  opacity: 0.6;
+}
+
+.pm-name {
+  font-weight: 700;
+  font-size: calc(var(--u) * 9);
+  display: flex;
+  gap: calc(var(--u) * 3);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.pm-name small {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.ail {
+  font-size: calc(var(--u) * 6.5);
+  font-weight: 400;
+  padding: 0 calc(var(--u) * 2);
+  border-radius: calc(var(--u) * 2);
+  background: #8a7a8e;
+  color: #fff;
+}
+
+.ail-slow {
+  background: #5a7aa8;
+}
+
+.ail-weak {
+  background: #a87a3a;
+}
+
+.ail-fear {
+  background: #7a4a8a;
+}
+
+.bar {
+  position: relative;
+  height: calc(var(--u) * 7);
+  margin-top: calc(var(--u) * 2);
+  background: #cfc2a6;
+  border-radius: calc(var(--u) * 2);
+  overflow: hidden;
+}
+
+.bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #6a9a4a;
+  transition: width 0.25s;
+}
+
+.bar.fp i {
+  background: #4a7ab0;
+}
+
+.bar span {
+  position: relative;
+  display: block;
+  padding-left: calc(var(--u) * 3);
+  font-size: calc(var(--u) * 6.5);
+  line-height: calc(var(--u) * 7);
+  color: #1e1a24;
+}
+
+.battle-menu {
+  top: auto;
+  left: calc(var(--u) * 8);
+  bottom: calc(var(--u) * 8);
+  transform: none;
+  min-width: calc(var(--u) * 150);
+  max-height: calc(var(--u) * 200);
+  overflow-y: auto;
+  padding: calc(var(--u) * 5) calc(var(--u) * 6);
+}
+
+.battle-menu li {
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 6);
+  font-size: calc(var(--u) * 10);
+}
+
+.battle-menu h2 {
+  font-size: calc(var(--u) * 10);
+  margin-bottom: calc(var(--u) * 3);
+}
+
+.battle-results {
+  text-align: center;
+  cursor: pointer;
+}
+
+.battle-results p {
+  margin: calc(var(--u) * 3) 0;
+  font-size: calc(var(--u) * 10);
+}
+
+.battle-results .levelup {
+  color: #7a4a8a;
+  font-weight: 700;
+}
+
+.battle-results .hint {
+  font-size: calc(var(--u) * 8);
+  opacity: 0.6;
+}
+
+.battle-auto {
+  position: absolute;
+  left: calc(var(--u) * 8);
+  bottom: calc(var(--u) * 8);
+  padding: calc(var(--u) * 3) calc(var(--u) * 8);
+  font-size: calc(var(--u) * 9);
+  color: #f3ead6;
+  background: rgba(30, 24, 40, 0.8);
+  border-radius: calc(var(--u) * 3);
+}
+
+.battle-auto[hidden] {
+  display: none;
+}

@@ -43,6 +43,7 @@ export interface EventDef {
   if?: Condition;
   cutscene?: string;
   dialogue?: string;
+  battle?: string;
 }
 
 export interface MapDef {

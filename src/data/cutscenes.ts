@@ -10,6 +10,9 @@ export const CUTSCENES: Record<string, Cutscene> = Object.fromEntries(
           { walk: 'player', path: ['up', 'up', 'up', 'up', 'up'] },
           { say: 'office-1' },
           { wait: 350 },
+          { say: 'office-rats' },
+          { battle: 'sorting-rats' },
+          { say: 'office-after-rats' },
           { face: 'odile', dir: 'right' },
           { walk: 'odile', path: ['right', 'right', 'right', 'right'] },
           { say: 'office-2' },
@@ -28,6 +31,9 @@ export const CUTSCENES: Record<string, Cutscene> = Object.fromEntries(
           { say: 'office-4' },
         ],
       },
+      { id: 'road-goose', steps: [{ say: 'goose-appears' }, { battle: 'road-goose' }] },
+      { id: 'road-hogs', steps: [{ say: 'hogs-appear' }, { battle: 'road-hogs' }] },
+      { id: 'road-brigand', steps: [{ say: 'brigand-appears' }, { battle: 'road-brigand' }] },
     ] satisfies Cutscene[]
   ).map((c) => [c.id, c]),
 );

@@ -5,7 +5,8 @@ import { MAPS } from '../src/data/maps';
 import { SPEAKERS } from '../src/data/speakers';
 import { parseMap, solidAt } from '../src/field/maps';
 import { applyAll, type Condition, type Effect, flagsRead, flagsWritten } from '../src/game/conditions';
-import { cutsceneDialogues, cutsceneEffects } from '../src/game/cutscene';
+import { cutsceneBattles, cutsceneDialogues, cutsceneEffects } from '../src/game/cutscene';
+import { ENCOUNTERS, ENEMIES } from '../src/data/enemies';
 import { playThrough } from '../src/game/dialogue';
 import { newGame, START } from '../src/game/state';
 import { hasFieldSprite } from '../src/sprites/fieldSprites';
@@ -67,6 +68,7 @@ describe('maps', () => {
       for (const e of m.events) {
         if (e.dialogue) expect(DIALOGUE[e.dialogue], e.dialogue).toBeDefined();
         if (e.cutscene) expect(CUTSCENES[e.cutscene], e.cutscene).toBeDefined();
+        if (e.battle) expect(ENCOUNTERS[e.battle], e.battle).toBeDefined();
         if (e.on !== 'enter') expect(e.x !== undefined && e.y !== undefined && e.x < pm.width && e.y < pm.height).toBe(true);
       }
     });
@@ -109,6 +111,7 @@ describe('cutscenes', () => {
     const npcIds = new Set(maps.flatMap((m) => m.npcs.map((n) => n.id)));
     for (const c of cutscenes) {
       for (const id of cutsceneDialogues(c)) expect(DIALOGUE[id], `${c.id} says ${id}`).toBeDefined();
+      for (const id of cutsceneBattles(c)) expect(ENCOUNTERS[id], `${c.id} fights ${id}`).toBeDefined();
       for (const s of c.steps) {
         if ('walk' in s) expect(s.walk === 'player' || npcIds.has(s.walk), s.walk).toBe(true);
         if ('face' in s) expect(s.face === 'player' || npcIds.has(s.face), s.face).toBe(true);
@@ -124,8 +127,14 @@ describe('cutscenes', () => {
 
 describe('story flags', () => {
   it('every flag that is read is set somewhere', () => {
-    const written = new Set(allEffects().flatMap(flagsWritten));
+    const written = new Set([...allEffects().flatMap(flagsWritten), ...Object.values(ENCOUNTERS).flatMap((e) => (e.wonFlag ? [e.wonFlag] : []))]);
     for (const c of allConditions()) for (const f of flagsRead(c)) expect(written.has(f), `flag ${f} is read but never set`).toBe(true);
+  });
+});
+
+describe('encounters', () => {
+  it('only use enemies that exist', () => {
+    for (const e of Object.values(ENCOUNTERS)) for (const id of e.enemies) expect(ENEMIES[id], `${e.id}: ${id}`).toBeDefined();
   });
 });
 

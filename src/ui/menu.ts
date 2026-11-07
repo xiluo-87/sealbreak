@@ -19,6 +19,7 @@ export class ListMenu {
     private items: MenuItem[],
     private readonly onCancel?: () => void,
     className = 'menu',
+    private readonly onHighlight?: (index: number) => void,
   ) {
     this.el = document.createElement('div');
     this.el.className = className;
@@ -34,6 +35,7 @@ export class ListMenu {
     parent.appendChild(this.el);
     this.selected = Math.max(0, this.items.findIndex((i) => !i.disabled));
     this.render();
+    this.onHighlight?.(this.selected);
   }
 
   private render(): void {
@@ -51,9 +53,10 @@ export class ListMenu {
         li.appendChild(d);
       }
       li.addEventListener('pointerenter', () => {
-        if (!item.disabled) {
+        if (!item.disabled && this.selected !== i) {
           this.selected = i;
           this.render();
+          this.onHighlight?.(i);
         }
       });
       li.addEventListener('click', () => {
@@ -69,6 +72,7 @@ export class ListMenu {
       if (!this.items[this.selected]?.disabled) break;
     }
     this.render();
+    this.onHighlight?.(this.selected);
   }
 
   update(input: Keyboard): void {
