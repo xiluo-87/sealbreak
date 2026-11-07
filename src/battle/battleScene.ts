@@ -135,6 +135,8 @@ export class BattleScene implements Scene {
   private biscuitVisual: Visual | null = null;
   private popups: Popup[] = [];
   private readonly fx = new Particles();
+  /** Time left before a peaceful ending hands back to the field, ms. */
+  private endIn = 0;
   private queue: BattleEvent[] = [];
   private wait = 0;
   private phase: 'intro' | 'next' | 'command' | 'play' | 'end' | 'done' = 'intro';
@@ -556,7 +558,13 @@ export class BattleScene implements Scene {
     this.autoEl.hidden = true;
     sound(result === 'victory' ? 'victory' : result === 'defeat' ? 'defeat' : result === 'delivered' ? 'chime' : 'swoosh');
     if (result === 'delivered') for (const v of this.visuals.values()) if (v.alpha > 0 && this.battle.get(v.key).side === 'enemy') this.effect(v, 'chime');
-    if (result === 'fled' || result === 'delivered') {
+    if (result === 'delivered') {
+      // Let the gold settle before leaving.
+      this.battle.applyResults(this.game);
+      this.endIn = 700;
+      return;
+    }
+    if (result === 'fled') {
       this.battle.applyResults(this.game);
       this.hooks.onEnd(result, null);
       return;
@@ -659,7 +667,10 @@ export class BattleScene implements Scene {
         this.finish();
         break;
       case 'done':
-        if (this.results && input.wasPressed('confirm')) this.leave();
+        if (this.endIn > 0) {
+          this.endIn -= dt;
+          if (this.endIn <= 0) this.hooks.onEnd('delivered', null);
+        } else if (this.results && input.wasPressed('confirm')) this.leave();
         break;
     }
   }

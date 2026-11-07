@@ -117,8 +117,9 @@ class TitleScene implements Scene {
     g.drawImage(this.ground, -x, -Math.round(1.5 * TILE));
     g.fillStyle = 'rgba(20, 16, 30, 0.62)';
     g.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    if (settings.reducedMotion) return;
     drawAmbient(g, 'leaves', this.t);
-    if (!settings.reducedMotion) this.envelopes(g);
+    this.envelopes(g);
   }
 
   /** A few letters blowing across the square, as if somebody dropped the sack. */

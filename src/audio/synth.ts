@@ -168,14 +168,19 @@ export class Synth {
     const song = this.current;
     if (!ctx || !song || ctx.state !== 'running') return;
     const now = ctx.currentTime;
+    // After the tab was hidden the clock jumped. Move the whole song on together, by whole
+    // beats, so every track picks up from now and they all stay in step.
+    const earliest = Math.min(...song.tracks.map((t) => t.time));
+    if (earliest < now - 0.25) {
+      const behind = Math.ceil((now + 0.05 - earliest) / song.beat) * song.beat;
+      for (const t of song.tracks) t.time += behind;
+    }
     for (const t of song.tracks) {
       const on = t.minIntensity <= this.intensity;
       if (on !== t.on) {
         t.on = on;
         t.out.gain.setTargetAtTime(on ? 1 : 0, now, 0.5);
       }
-      // After the tab was hidden the clock jumped: pick up from now instead of catching up.
-      if (t.time < now - 0.25) t.time = now + 0.05;
       let guard = 0;
       while (t.time < now + LOOKAHEAD && guard++ < 64) {
         const n = t.notes[t.i];
