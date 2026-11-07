@@ -11,6 +11,12 @@ describe('parseDebugOptions', () => {
     expect(o).toEqual({ overlay: true, seed: 'abc', speed: 2, sprites: true });
   });
 
+  it('reads region, level and heat', () => {
+    expect(parseDebugOptions('?region=thistle&level=4&heat=6')).toMatchObject({ region: 'thistle', level: 4, heat: 6 });
+    expect(parseDebugOptions('?heat=-2').heat).toBeUndefined();
+    expect(parseDebugOptions('?level=99').level).toBe(15);
+  });
+
   it('clamps or ignores bad speeds', () => {
     expect(parseDebugOptions('?speed=999').speed).toBe(MAX_SPEED);
     expect(parseDebugOptions('?speed=-1').speed).toBe(1);

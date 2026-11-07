@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** Milestone 3 (battle core) is done. The opening now includes a tutorial fight, and the first stretch of the Thistle Road has three fixed fights. Battles have the timeline, weather forecast, skills, items, guarding, running, ailments, auto-battle, XP and levels, and Biscuit. Letters and their skills come next, in Milestone 4.
+**Status:** Milestone 4 (letters) is done. The sack of letters falls into your hands in the opening scene, and every letter can be carried for its skill, opened mid-fight with Break the Seal, read, resealed or delivered. The satchel shows who carries what and how interested the Postal Inspectorate is in you. Three letters can be delivered in Thistle Cross. Random encounters, the danger gauge and the Inspectors on the road come next, in Milestone 5.
 
 ## The idea
 
@@ -25,7 +25,7 @@ npm run dev
 
 Arrow keys or WASD walk, Shift runs, Enter, Space or Z talks and confirms, and Esc or X opens the menu.
 
-Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Use `?battle=road-hogs&level=3` to jump straight into a fight (`sorting-rats`, `road-goose`, `road-hogs` or `road-brigand`). Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
+Add `?debug` to the URL for the debug overlay (toggle with the backtick key or F3), `?seed=…` to fix the RNG seed and `?speed=…` to change game speed. Use `?battle=road-hogs&level=3` to jump straight into a fight (`sorting-rats`, `road-goose`, `road-hogs` or `road-brigand`), and `?region=thistle` or `?region=thistle-road` to start just after the opening. `?level=…` and `?heat=…` work with both. Open `?sprites` for the sprite gallery, which shows every sprite and animation at 1× and 4× on light and dark backgrounds, plus the silhouette test. `npm test`, `npm run lint` and `npm run build` are the checks CI runs.
 
 ## Tech
 

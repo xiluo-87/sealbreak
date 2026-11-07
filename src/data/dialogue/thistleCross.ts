@@ -3,7 +3,7 @@
  * Lines are kept short; humour comes from people being people.
  */
 import type { Dialogue } from '../../game/dialogue';
-import { beforeAfter, narrate, say, simple } from './helpers';
+import { beforeAfter, deliveryChoices, narrate, say, simple } from './helpers';
 
 const DONE = 'intro.done';
 
@@ -36,11 +36,17 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
     ],
     [{ set: 'intro.sackFell' }],
   ),
-  simple('office-rats', [
-    narrate('The sack twitches. Something inside it squeaks.'),
-    say('odile', 'Rats. In the HELD sack. Of course there are.', 'angry'),
-    say('odile', 'Senior Courier, I believe this is your department.', 'neutral'),
-  ]),
+  simple(
+    'office-rats',
+    [
+      narrate('The sack twitches. Something inside it squeaks.'),
+      say('odile', 'Rats. In the HELD sack. Of course there are.', 'angry'),
+      narrate('She fishes a letter out of the sack and presses it into your hand.'),
+      say('odile', 'Hold this. Sealed words keep hold of whatever they were written with. In a pinch, so can you.', 'neutral'),
+      say('odile', 'Senior Courier, I believe this is your department.', 'neutral'),
+    ],
+    [{ give: 'L02', to: 'rookie' }],
+  ),
   simple('office-after-rats', [
     say('odile', 'Well swung. You’ll do.', 'happy'),
     say('odile', 'Now. Let’s see what they were nesting in.', 'neutral'),
@@ -124,74 +130,193 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
   simple('well', [narrate('A wishing well. Someone has thrown in a button.')]),
 
   // People.
-  beforeAfter(
-    'ned',
-    DONE,
-    [
-      say('ned', 'Morning! You’re new. Nobody’s new in Thistle Cross. We had a new cow in the spring and it was the talk of the place.'),
-      say('ned', 'Post office? Red door. Tell Odile her loaf’s ready. Same loaf thirty years. I could bake it in my sleep. I have.'),
+  {
+    id: 'ned',
+    entry: [
+      { if: { letter: 'L02', is: 'delivered' }, node: 'after' },
+      { if: { flag: DONE }, node: 'offer' },
+      { node: 'before' },
     ],
-    [
-      say('ned', 'Delivering, are you? Nobody’s sent me a letter in thirty years.'),
-      say('ned', 'Bills, yes. I don’t count bills. Nobody counts bills. That’s the trouble with them.'),
+    nodes: {
+      before: {
+        lines: [
+          say('ned', 'Morning! You’re new. Nobody’s new in Thistle Cross. We had a new cow in the spring and it was the talk of the place.'),
+          say('ned', 'Post office? Red door. Tell Odile her loaf’s ready. Same loaf thirty years. I could bake it in my sleep. I have.'),
+        ],
+      },
+      offer: {
+        lines: [say('ned', 'Delivering, are you? Nobody’s sent me a letter in thirty years.'), say('ned', 'Bills, yes. I don’t count bills. Nobody counts bills. That’s the trouble with them.')],
+        choices: deliveryChoices('L02', 'Final Demand', { sealed: 'sealed', opened: 'opened' }),
+      },
+      sealed: {
+        lines: [
+          narrate('Ned opens it, reads it, and goes very still.'),
+          say('ned', 'Brackwater and Sons.'),
+          say('ned', 'Brackwater and Sons went bust before I grew my first moustache. Old Brackwater ran off with the takings and a dancer from Millbridge.'),
+          say('ned', 'Eleven shillings and fourpence! For flour!'),
+          narrate('Ned laughs until he has to sit down on a sack of flour, and then he laughs some more.'),
+          say('ned', 'I’m framing this. Here, take some loaves. On the house. On Brackwater.'),
+        ],
+      },
+      opened: {
+        lines: [
+          say('ned', 'Seal’s broken. Somebody’s had a read of this.'),
+          narrate('He reads it anyway, and the corner of his mouth starts to go.'),
+          say('ned', 'Brackwater and Sons. They went bust thirty years ago. I suppose you know the joke already, then.'),
+          say('ned', 'Still. It’s a good joke. Have a loaf.'),
+        ],
+      },
+      after: { lines: [say('ned', 'I’ve put it up behind the counter. Customers ask if I ever paid. I tell them I’m thinking about it.')] },
+    },
+  },
+  {
+    id: 'mayor',
+    entry: [
+      { if: { letter: 'L03', is: 'delivered' }, node: 'after' },
+      { if: { flag: DONE }, node: 'offer' },
+      { node: 'before' },
     ],
-  ),
-  beforeAfter(
-    'mayor',
-    DONE,
-    [
-      say('mayor', 'Look at this. LOOK at it. Someone has been at my hedge in the night.'),
-      say('mayor', 'That was a peacock. Now it is a peacock with a moustache. Done with shears. Professional work.'),
-      say('mayor', 'I have my suspicions. I have a list of suspicions.'),
+    nodes: {
+      before: {
+        lines: [
+          say('mayor', 'Look at this. LOOK at it. Someone has been at my hedge in the night.'),
+          say('mayor', 'That was a peacock. Now it is a peacock with a moustache. Done with shears. Professional work.'),
+          say('mayor', 'I have my suspicions. I have a list of suspicions.'),
+        ],
+      },
+      offer: {
+        lines: [say('mayor', 'Going round with letters, are you? Keep an eye out for anyone carrying shears.')],
+        choices: deliveryChoices('L03', 'I Know What You Did to My Hedge', { sealed: 'sealed', opened: 'opened' }),
+      },
+      sealed: {
+        lines: [
+          narrate('The Mayor reads it twice. His moustache rises slowly, like a drawbridge.'),
+          say('mayor', '“I know what you did to my hedge.” This was posted thirty years ago.'),
+          say('mayor', 'I did do something to a hedge, thirty years ago. I trimmed it. It was in the way of my peacock.'),
+          say('mayor', 'Which means the moustache last night was… Hester. It has to be Hester. She waited thirty years.'),
+          say('mayor', 'That is magnificent. I’m going round there to apologise. For the hedge. Not for the peacock.'),
+          say('mayor', 'And Mrs. Dray is my cousin. I’ll tell her to look after you.'),
+        ],
+      },
+      opened: {
+        lines: [
+          say('mayor', 'This has been opened. A private letter, opened by the Post, in MY town.'),
+          narrate('He reads it with his lips pressed tight. Then a little less tight.'),
+          say('mayor', '…Well. I suppose you know what I did to the hedge, then. Everybody will by teatime.'),
+          say('mayor', 'I’ll make my peace with Hester. And I’ll tell Mrs. Dray you’re a courier of flexible principles.'),
+        ],
+      },
+      after: { lines: [say('mayor', 'Hester and I are on speaking terms again. Mostly we speak about the peacock.')] },
+    },
+  },
+  {
+    id: 'hester',
+    entry: [
+      { if: { letter: 'L03', is: 'delivered' }, node: 'after' },
+      { if: { flag: DONE }, node: 'later' },
+      { node: 'before' },
     ],
-    [
-      say('mayor', 'Going round with letters, are you? Keep an eye out for anyone carrying shears.'),
-      say('mayor', 'Or anyone looking pleased with themselves near privet.'),
+    nodes: {
+      before: {
+        lines: [
+          say('hester', 'The Mayor’s out shouting at his hedge again.'),
+          say('hester', 'It was a peacock. Now it’s a peacock with a moustache. Honestly, I think it’s an improvement.'),
+        ],
+      },
+      later: { lines: [say('hester', 'If anyone asks, I was asleep. Very asleep. Ask my cat.')] },
+      after: {
+        lines: [
+          say('hester', 'The Mayor came round and apologised. For the hedge. Thirty years late.'),
+          say('hester', 'I didn’t know what to do with my face. So I made him a cup of tea. It’s the first time he’s been in my kitchen.'),
+        ],
+      },
+    },
+  },
+  {
+    id: 'finch',
+    entry: [
+      { if: { letter: 'L01', is: 'delivered' }, node: 'after' },
+      { if: { flag: DONE }, node: 'offer' },
+      { node: 'before' },
     ],
-  ),
-  beforeAfter(
-    'hester',
-    DONE,
-    [
-      say('hester', 'The Mayor’s out shouting at his hedge again.'),
-      say('hester', 'It was a peacock. Now it’s a peacock with a moustache. Honestly, I think it’s an improvement.'),
+    nodes: {
+      before: {
+        lines: [
+          say('finch', 'Are you from the post? No, you’ve not got the bag.'),
+          say('finch', 'I watch the road in the mornings. Habit. My boy used to come up that way.'),
+          say('finch', 'Never mind me, dear.'),
+        ],
+      },
+      offer: {
+        lines: [say('finch', 'That’s a post bag. You’re a courier.'), say('finch', 'If there’s ever anything for Finch… well. You’d bring it, wouldn’t you.')],
+        choices: deliveryChoices('L01', 'Home by Harvest', { sealed: 'sealed', opened: 'opened' }),
+      },
+      sealed: {
+        lines: [
+          narrate('Mother Finch looks at the handwriting for a long time before she opens it.'),
+          narrate('She reads it at the gate. Then she reads it again.'),
+          say('finch', '“Home by harvest.” He always said that. Every time he went anywhere. Home by harvest, Mam.'),
+          say('finch', 'He was never home by harvest once in his life. Always late. I’d leave the gate on the latch.'),
+        ],
+        next: 'quilt',
+      },
+      opened: {
+        lines: [
+          say('finch', 'It’s been opened.'),
+          say('finch', 'Did you read it? …No. Don’t tell me. It doesn’t matter.'),
+          narrate('She reads it at the gate, with her back to you.'),
+          say('finch', 'He always said that. Home by harvest. He was never once on time.'),
+        ],
+        next: 'quilt',
+      },
+      quilt: {
+        lines: [
+          narrate('She folds the letter carefully along its old creases.'),
+          say('finch', 'Wait there.'),
+          narrate('She comes back with a quilt over her arm.'),
+          say('finch', 'I made this for when he came home. You’re out on the roads. You have it.'),
+          say('finch', 'And tell Gil Ashby you’re my guests. He owes me for the jam.'),
+        ],
+      },
+      after: { lines: [say('finch', 'I’ve put it on the mantel, by his picture. I read it in the mornings. Habit.')] },
+    },
+  },
+  {
+    id: 'gil',
+    entry: [
+      { if: { flag: 'inn.free.thistle' }, node: 'free' },
+      { if: { flag: DONE }, node: 'after' },
+      { node: 'before' },
     ],
-    [say('hester', 'If anyone asks, I was asleep. Very asleep. Ask my cat.')],
-  ),
-  beforeAfter(
-    'finch',
-    DONE,
-    [
-      say('finch', 'Are you from the post? No, you’ve not got the bag.'),
-      say('finch', 'I watch the road in the mornings. Habit. My boy used to come up that way.'),
-      say('finch', 'Never mind me, dear.'),
+    nodes: {
+      before: {
+        lines: [
+          say('gil', 'The Thistle and Crown opens at six. Three rooms, and two of them have windows.'),
+          say('gil', 'Odile drinks here Fridays. Half of stout and the crossword, and nobody talks to her till it’s done.'),
+        ],
+      },
+      after: { lines: [say('gil', 'Leaving with Odile? Then I suppose the crossword’s mine now. Seven across has been empty since Tuesday.')] },
+      free: { lines: [say('gil', 'Mother Finch says you’re her guests. Then you’re mine as well. There’s always a bed here for you.')] },
+    },
+  },
+  {
+    id: 'dray',
+    entry: [
+      { if: { flag: 'shop.discount.thistle' }, node: 'discount' },
+      { if: { flag: DONE }, node: 'after' },
+      { node: 'before' },
     ],
-    [
-      say('finch', 'That’s a post bag. You’re a courier.'),
-      say('finch', 'If there’s ever anything for Finch… well. You’d bring it, wouldn’t you.'),
-    ],
-  ),
-  beforeAfter(
-    'gil',
-    DONE,
-    [
-      say('gil', 'The Thistle and Crown opens at six. Three rooms, and two of them have windows.'),
-      say('gil', 'Odile drinks here Fridays. Half of stout and the crossword, and nobody talks to her till it’s done.'),
-    ],
-    [say('gil', 'Leaving with Odile? Then I suppose the crossword’s mine now. Seven across has been empty since Tuesday.')],
-  ),
-  beforeAfter(
-    'dray',
-    DONE,
-    [
-      say('dray', 'Sundries. That’s everything that isn’t something else.'),
-      say('dray', 'We’re shut for stocktaking. I’m counting the string. It’s going badly.'),
-    ],
-    [
-      say('dray', 'Off on the road? Mind the geese. They’ve no respect for the uniform.'),
-      say('dray', 'Come back when I’ve finished the string and I’ll sell you a Repel Bell.'),
-    ],
-  ),
+    nodes: {
+      before: { lines: [say('dray', 'Sundries. That’s everything that isn’t something else.'), say('dray', 'We’re shut for stocktaking. I’m counting the string. It’s going badly.')] },
+      after: {
+        lines: [
+          say('dray', 'Off on the road? Mind the geese. They’ve no respect for the uniform.'),
+          say('dray', 'Come back when I’ve finished the string and I’ll sell you a Repel Bell.'),
+        ],
+      },
+      discount: { lines: [say('dray', 'My cousin the Mayor says I’m to look after you. When I open, you’ll pay what I pay. Don’t tell anyone.')] },
+    },
+  },
   beforeAfter(
     'wireman',
     DONE,

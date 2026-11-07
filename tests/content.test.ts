@@ -7,6 +7,7 @@ import { parseMap, solidAt } from '../src/field/maps';
 import { applyAll, type Condition, type Effect, flagsRead, flagsWritten } from '../src/game/conditions';
 import { cutsceneBattles, cutsceneDialogues, cutsceneEffects } from '../src/game/cutscene';
 import { ENCOUNTERS, ENEMIES } from '../src/data/enemies';
+import { LETTER_BY_ID, LETTERS } from '../src/data/letters';
 import { playThrough } from '../src/game/dialogue';
 import { newGame, START } from '../src/game/state';
 import { hasFieldSprite } from '../src/sprites/fieldSprites';
@@ -127,8 +128,31 @@ describe('cutscenes', () => {
 
 describe('story flags', () => {
   it('every flag that is read is set somewhere', () => {
-    const written = new Set([...allEffects().flatMap(flagsWritten), ...Object.values(ENCOUNTERS).flatMap((e) => (e.wonFlag ? [e.wonFlag] : []))]);
+    const written = new Set([
+      ...allEffects().flatMap(flagsWritten),
+      ...Object.values(ENCOUNTERS).flatMap((e) => (e.wonFlag ? [e.wonFlag] : [])),
+      ...LETTERS.flatMap((l) => l.reward.flags ?? []),
+    ]);
     for (const c of allConditions()) for (const f of flagsRead(c)) expect(written.has(f), `flag ${f} is read but never set`).toBe(true);
+  });
+});
+
+describe('letters in dialogue', () => {
+  it('refer to letters that exist, and every delivery offers each state', () => {
+    for (const d of dialogues) {
+      for (const n of Object.values(d.nodes)) {
+        for (const c of n.choices ?? []) {
+          for (const e of c.then ?? []) {
+            if ('deliver' in e) expect(LETTER_BY_ID[e.deliver], `${d.id} delivers ${e.deliver}`).toBeDefined();
+          }
+        }
+        const delivers = new Set((n.choices ?? []).flatMap((c) => (c.then ?? []).flatMap((e) => ('deliver' in e ? [e.deliver] : []))));
+        for (const id of delivers) {
+          const states = (n.choices ?? []).flatMap((c) => (c.if && 'letter' in c.if && c.if.letter === id ? [c.if.is] : []));
+          expect(new Set(states), `${d.id} covers every state of ${id}`).toEqual(new Set(['sealed', 'opened', 'resealed']));
+        }
+      }
+    }
   });
 });
 

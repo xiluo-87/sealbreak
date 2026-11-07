@@ -6,7 +6,9 @@
 import { BALANCE } from '../data/balance';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
-import { SKILLS, type Weight } from '../data/skills';
+import { LETTER_BY_ID } from '../data/letters';
+import { type SkillDef, SKILLS, type Weight } from '../data/skills';
+import type { LetterMode } from './letterSkills';
 import type { Weather } from '../data/weather';
 import type { Keyboard } from '../input/keyboard';
 import type { Scene, SceneContext } from '../game/scene';
@@ -192,7 +194,7 @@ export class BattleScene implements Scene {
     this.autoEl.textContent = 'Auto-battle on. Esc or X to take over.';
     this.el.append(this.msgEl, this.panelEl, this.autoEl);
     ui.appendChild(this.el);
-    this.message(this.tutorial ? 'Rats in the sack! Choose Attack, then pick a rat.' : `${enemies.map((e) => e.name).join(', ')}!`);
+    this.message(this.tutorial ? 'Rats! Attack them, or use the letter you carry with Letter.' : `${enemies.map((e) => e.name).join(', ')}!`);
     this.renderPanel();
   }
 
@@ -236,12 +238,18 @@ export class BattleScene implements Scene {
     const c = this.battle.current();
     this.closeMenu();
     this.phase = 'command';
-    this.message(this.tutorial ? 'Rats in the sack! Choose Attack, then pick a rat.' : `${c.name}’s turn.`);
+    this.message(this.tutorial && c.id === 'rookie' ? 'Attack, or choose Letter to use the letter you carry.' : `${c.name}’s turn.`);
     const items: (MenuItem & { weight?: Weight })[] = [
       { label: 'Attack', weight: 'normal', action: () => this.pickTarget('enemy', (t) => ({ kind: 'attack', target: t })) },
       { label: 'Skill', disabled: this.battle.usableSkills(c).length === 0, action: () => this.showSkills() },
-      { label: 'Letter', detail: 'No letters carried yet', disabled: true, action: () => undefined },
-      { label: 'Break the Seal', disabled: true, action: () => undefined },
+      {
+        label: 'Letter',
+        detail: c.letters.length === 0 ? 'No letters carried' : undefined,
+        weight: 'normal',
+        disabled: !this.battle.letterOptions(c, 'carry').some((o) => o.usable),
+        action: () => this.showLetters('carry'),
+      },
+      { label: 'Break the Seal', weight: 'normal', disabled: c.letters.length === 0, action: () => this.showLetters('burst') },
       { label: 'Guard', weight: 'light', action: () => this.choose({ kind: 'guard' }) },
       { label: 'Item', disabled: !Object.entries(this.game.items).some(([id, n]) => n > 0 && ITEMS[id]?.battle), action: () => this.showItems() },
       { label: 'Run', weight: 'normal', disabled: !this.battle.encounter.escapable, detail: this.battle.encounter.escapable ? `${Math.round(this.battle.runChance() * 100)}%` : 'Can’t run', action: () => this.choose({ kind: 'run' }) },
@@ -260,15 +268,36 @@ export class BattleScene implements Scene {
       label: `${s.name}  ${s.fp} FP`,
       detail: s.description,
       disabled: s.fp > c.fp,
-      action: () => {
-        if (s.target === 'enemy') this.pickTarget('enemy', (t) => ({ kind: 'skill', skill: s.id, target: t }));
-        else if (s.target === 'ally') this.pickTarget('ally', (t) => ({ kind: 'skill', skill: s.id, target: t }));
-        else this.choose({ kind: 'skill', skill: s.id, target: c.key });
-      },
+      action: () => this.targetSkill(s, (t) => ({ kind: 'skill', skill: s.id, target: t }), () => this.showSkills()),
     }));
     this.menu = new ListMenu(this.el, 'Skill', items, () => this.showCommands(), 'menu battle-menu', (i) => {
       this.preview = skills[i]?.weight;
     });
+  }
+
+  private showLetters(mode: LetterMode): void {
+    const c = this.battle.current();
+    this.closeMenu();
+    const opts = this.battle.letterOptions(c, mode);
+    const items: MenuItem[] = opts.map((o) => ({
+      label: mode === 'carry' ? `${o.skill.name}${o.skill.passive ? '' : `  ${o.skill.fp} FP`}` : o.skill.name,
+      detail: `${LETTER_BY_ID[o.letter]?.title ?? o.letter}. ${o.skill.description}`,
+      disabled: !o.usable,
+      action: () => this.targetSkill(o.skill, (t) => ({ kind: 'letter', letter: o.letter, mode, target: t }), () => this.showLetters(mode)),
+    }));
+    this.menu = new ListMenu(this.el, mode === 'carry' ? 'Letter' : 'Break the Seal', items, () => this.showCommands(), 'menu battle-menu', () => {
+      this.preview = 'normal';
+    });
+  }
+
+  /** Picks a target as the skill requires, or acts at once for self and group skills. */
+  private targetSkill(s: SkillDef, make: (key: string) => Action, back: () => void): void {
+    const c = this.battle.current();
+    if (s.target === 'enemy') this.pickTarget('enemy', make, back);
+    else if (s.target === 'ally') this.pickTarget('ally', make, back);
+    else if (s.target === 'anyAlly') this.pickTarget('any', make, back);
+    else if (s.target === 'allEnemies') this.choose(make(this.battle.alive('enemy')[0]?.key ?? c.key));
+    else this.choose(make(c.key));
   }
 
   private showItems(): void {
@@ -287,10 +316,11 @@ export class BattleScene implements Scene {
     });
   }
 
-  private pickTarget(kind: 'enemy' | 'ally' | 'fallen', make: (key: string) => Action): void {
-    const back = (): void => this.showCommands();
+  private pickTarget(kind: 'enemy' | 'ally' | 'fallen' | 'any', make: (key: string) => Action, back: () => void = () => this.showCommands()): void {
     this.closeMenu();
-    const pool = this.battle.combatants.filter((c) => (kind === 'enemy' ? c.side === 'enemy' && !c.ko : kind === 'ally' ? c.side === 'party' && !c.ko : c.side === 'party' && c.ko));
+    const pool = this.battle.combatants.filter((c) =>
+      kind === 'enemy' ? c.side === 'enemy' && !c.ko : kind === 'ally' ? c.side === 'party' && !c.ko : kind === 'any' ? c.side === 'party' : c.side === 'party' && c.ko,
+    );
     if (pool.length === 0) {
       this.message('Nobody to use that on.');
       this.showCommands();
@@ -370,13 +400,24 @@ export class BattleScene implements Scene {
         const v = this.visual(e.actor);
         const c = this.battle.get(e.actor);
         if (v) {
-          v.anim = e.anim === 'attack' ? 'attack' : e.anim === 'guard' ? 'guard' : c.side === 'enemy' ? (e.anim === 'cast' ? 'cast' : 'attack') : 'read';
+          v.anim =
+            e.anim === 'attack'
+              ? 'attack'
+              : e.anim === 'guard'
+                ? 'guard'
+                : e.anim === 'breakSeal'
+                  ? 'breakSeal'
+                  : c.side === 'enemy'
+                    ? e.anim === 'cast'
+                      ? 'cast'
+                      : 'attack'
+                    : 'read';
           if (!v.sheet.anims.has(v.anim)) v.anim = 'attack';
           v.t = 0;
           if (e.anim === 'attack') v.lunge = 1;
         }
         this.message(`${c.name}: ${e.label}`);
-        this.wait = e.anim === 'attack' ? 260 : 360;
+        this.wait = e.anim === 'attack' ? 260 : e.anim === 'breakSeal' ? 720 : 420;
         break;
       }
       case 'damage': {

@@ -9,9 +9,10 @@ import { MAPS } from '../data/maps';
 import { SPEAKERS } from '../data/speakers';
 import { applyAll, check } from '../game/conditions';
 import type { Cutscene } from '../game/cutscene';
-import { DialogueRun, fillText } from '../game/dialogue';
+import { type Dialogue, DialogueRun, fillText } from '../game/dialogue';
 import type { Scene, SceneContext } from '../game/scene';
 import type { GameState } from '../game/state';
+import { deliveryNotice } from '../letters/letters';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { paintGround, tallSpriteFor } from '../render/tileArt';
 import { DialogueBox, type SpeakerInfo } from '../ui/dialogueBox';
@@ -27,6 +28,8 @@ export interface FieldHooks {
   openMenu(): void;
   /** Starts a battle; `done` runs when the party is back in the field. */
   battle(encounter: string, done: (result: 'victory' | 'fled') => void): void;
+  /** A short message, such as a hint. */
+  notify(text: string): void;
 }
 
 interface Npc {
@@ -156,6 +159,10 @@ export class FieldScene implements Scene {
   private say(id: string, onDone: () => void): void {
     const d = DIALOGUE[id];
     if (!d) throw new Error(`unknown dialogue ${id}`);
+    this.sayDialogue(d, onDone);
+  }
+
+  private sayDialogue(d: Dialogue, onDone: () => void): void {
     const run = new DialogueRun(d, this.state);
     if (run.done) {
       onDone();
@@ -183,6 +190,14 @@ export class FieldScene implements Scene {
     this.dialogue = null;
     this.box.hide();
     this.syncFollowers();
+    const deliveries = d?.run.out.deliveries ?? [];
+    if (d && deliveries.length > 0) {
+      // Report what the delivery brought, then carry on.
+      const lines = deliveries.flatMap((r) => deliveryNotice(r.letter, r, this.state.rookieName).map((text) => ({ text })));
+      lines.push({ text: 'You can read it in the satchel.' });
+      this.sayDialogue({ id: 'delivery', entry: [{ node: 'n' }], nodes: { n: { lines } } }, d.onDone);
+      return;
+    }
     d?.onDone();
   }
 
@@ -230,6 +245,10 @@ export class FieldScene implements Scene {
       this.cutscene = null;
       this.syncFollowers();
       if (this.map.def.kind === 'town') this.hooks.autosave(this.state);
+      if (this.state.flags['intro.done'] && !this.state.flags['hint.satchel']) {
+        this.state.flags['hint.satchel'] = true;
+        this.hooks.notify('The sack is yours now. Press Esc and open the satchel to sort your letters.');
+      }
       return;
     }
     if ('say' in step) {

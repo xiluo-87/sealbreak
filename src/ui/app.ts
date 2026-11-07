@@ -18,8 +18,19 @@ import type { Scene, SceneContext } from '../game/scene';
 import { DEFAULT_NAME, type GameState, MAX_NAME_LENGTH, newGame, PARTY_IDS } from '../game/state';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { paintGround } from '../render/tileArt';
+import { ACCESSORIES } from '../data/accessories';
+import { LETTER_BY_ID } from '../data/letters';
+import { equip } from '../letters/letters';
+import { LetterReader } from './letterReader';
 import { ListMenu, type MenuItem } from './menu';
+import { Satchel } from './satchel';
 import { Toast } from './toast';
+
+/** Where `?region=` starts. More regions arrive with Milestone 6. */
+const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facing'>> = {
+  thistle: { mapId: 'thistle-cross', x: 19, y: 9, facing: 'down' },
+  'thistle-road': { mapId: 'thistle-road', x: 2, y: 6, facing: 'right' },
+};
 
 function playTime(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -63,32 +74,44 @@ export class App {
   private readonly toast: Toast;
   private readonly storage: StorageLike | null;
   private field: FieldScene | null = null;
+  private readonly reader: LetterReader;
+  private satchel: Satchel | null = null;
 
   constructor(
     private readonly ui: HTMLElement,
     private readonly seed: string,
-    debug: { battle?: string; level?: number } = {},
+    debug: { battle?: string; level?: number; region?: string; heat?: number } = {},
   ) {
     this.storage = browserStorage();
     this.toast = new Toast(ui);
+    this.reader = new LetterReader(ui);
     this.scene = new TitleScene();
-    if (debug.battle && ENCOUNTERS[debug.battle]) this.debugBattle(debug.battle, debug.level ?? 1);
+    if (debug.battle && ENCOUNTERS[debug.battle]) this.debugBattle(debug.battle, debug.level ?? 1, debug.heat ?? 0);
+    else if (debug.region && REGION_STARTS[debug.region]) this.startField(this.debugState(debug.region, debug.level ?? 1, debug.heat ?? 0));
     else this.showTitle();
   }
 
-  /** `?battle=<id>&level=<n>`: straight into a fight on the Thistle Road, for testing and balance. */
-  private debugBattle(encounter: string, level: number): void {
+  /** A game just past the opening, in a region, at a level and Heat (for testing and balance). */
+  private debugState(region: string, level: number, heat: number): GameState {
     const s = newGame(DEFAULT_NAME, this.seed);
-    Object.assign(s.flags, { 'intro.arrived': true, 'intro.done': true, 'biscuit.joined': true, 'road.seen': true });
+    Object.assign(s.flags, { 'intro.arrived': true, 'intro.sackFell': true, 'intro.sackTaken': true, 'intro.ratsBeaten': true, 'intro.lockingUp': true, 'intro.done': true, 'biscuit.joined': true, 'hint.satchel': true });
     s.party = ['rookie', 'odile'];
+    s.letters.L02 = { state: 'sealed', holder: 'rookie' };
     for (const id of PARTY_IDS) {
       const st = statsAt(id, level);
       s.members[id] = { level, xp: xpForLevel(level), hp: st.hp, fp: st.fp };
     }
-    s.mapId = 'thistle-road';
+    s.heat = heat;
+    const start = REGION_STARTS[region];
+    if (start) Object.assign(s, start);
+    return s;
+  }
+
+  /** `?battle=<id>&level=<n>`: straight into a fight on the Thistle Road, for testing and balance. */
+  private debugBattle(encounter: string, level: number, heat: number): void {
+    const s = this.debugState('thistle-road', level, heat);
+    s.flags['road.seen'] = true;
     s.x = 4;
-    s.y = 6;
-    s.facing = 'right';
     this.startField(s);
     this.startBattle(encounter, () => undefined);
   }
@@ -96,6 +119,14 @@ export class App {
   /** Called every fixed step. Menus take input before the scene does. */
   update(ctx: SceneContext): void {
     this.toast.update(ctx.stepMs);
+    if (this.satchel) {
+      this.satchel.update(ctx.input);
+      return;
+    }
+    if (this.reader.open) {
+      if (ctx.input.wasPressed('confirm') || ctx.input.wasPressed('cancel')) this.reader.close();
+      return;
+    }
     if (this.form) {
       if (ctx.input.wasPressed('cancel')) this.showTitle();
       return;
@@ -108,6 +139,8 @@ export class App {
   }
 
   private clearUi(): void {
+    this.satchel?.destroy();
+    this.satchel = null;
     this.menu?.destroy();
     this.menu = null;
     this.form?.remove();
@@ -173,6 +206,7 @@ export class App {
       },
       openMenu: () => this.showPause(),
       battle: (id, done) => this.startBattle(id, done),
+      notify: (text) => this.toast.show(text, 3200),
     });
     this.field = field;
     this.scene = field;
@@ -191,7 +225,17 @@ export class App {
         }
         if (result === 'victory' && enc?.wonFlag) field.state.flags[enc.wonFlag] = true;
         this.scene = field;
-        done(result);
+        // Letters whose seals broke in the fight can be read now.
+        const opened = battle.battle.broken.map((id) => LETTER_BY_ID[id]).filter((l) => !!l);
+        const next = (): void => {
+          const l = opened.shift();
+          if (!l) {
+            done(result);
+            return;
+          }
+          this.reader.show(l, 'broken', next, 'The seal broke in the fight. The letter reads:');
+        };
+        next();
       },
     });
     this.scene = battle;
@@ -220,7 +264,8 @@ export class App {
       'Paused',
       [
         { label: 'Resume', action: close },
-        { label: 'Party', detail: this.partySummary(field.state), action: () => this.showItems(field.state) },
+        { label: 'Satchel', detail: 'Letters and Gran’s Letter', action: () => this.showSatchel(field.state) },
+        { label: 'Party', detail: this.partySummary(field.state), action: () => this.showParty(field.state) },
         { label: 'Save game', action: () => this.showSave(field.state) },
         { label: 'Load game', action: () => this.showLoad(() => this.showPause()) },
         { label: 'Title screen', action: () => this.showTitle() },
@@ -239,6 +284,60 @@ export class App {
       .join(' · ') + ` · ${state.coin} coin`;
   }
 
+  private showSatchel(state: GameState): void {
+    this.clearUi();
+    this.satchel = new Satchel(this.ui, state, this.reader, () => this.showPause(), (t) => this.toast.show(t));
+  }
+
+  private showParty(state: GameState): void {
+    this.clearUi();
+    this.menu = new ListMenu(
+      this.ui,
+      this.partySummary(state),
+      [
+        { label: 'Use an item', action: () => this.showItems(state) },
+        { label: 'Accessories', detail: state.accessories.owned.length === 0 ? 'None yet' : `${state.accessories.owned.length} owned`, disabled: state.accessories.owned.length === 0, action: () => this.showGear(state) },
+      ],
+      () => this.showPause(),
+    );
+  }
+
+  private memberName(state: GameState, id: (typeof PARTY_IDS)[number]): string {
+    return MEMBERS[id].name.replace('{name}', state.rookieName);
+  }
+
+  private showGear(state: GameState): void {
+    this.clearUi();
+    const items: MenuItem[] = state.party.map((id) => {
+      const a = state.accessories.equipped[id];
+      return { label: this.memberName(state, id), detail: a ? (ACCESSORIES[a]?.name ?? a) : 'Nothing worn', action: () => this.showGearFor(state, id) };
+    });
+    this.menu = new ListMenu(this.ui, 'Accessories', items, () => this.showParty(state));
+  }
+
+  private showGearFor(state: GameState, id: (typeof PARTY_IDS)[number]): void {
+    this.clearUi();
+    const items: MenuItem[] = state.accessories.owned.map((a) => {
+      const wearer = Object.entries(state.accessories.equipped).find(([, v]) => v === a)?.[0] as (typeof PARTY_IDS)[number] | undefined;
+      return {
+        label: ACCESSORIES[a]?.name ?? a,
+        detail: `${ACCESSORIES[a]?.description ?? ''}${wearer && wearer !== id ? ` Worn by ${this.memberName(state, wearer)}.` : ''}`,
+        action: () => {
+          equip(state, id, a);
+          this.showGear(state);
+        },
+      };
+    });
+    items.push({
+      label: 'Take it off',
+      action: () => {
+        equip(state, id, null);
+        this.showGear(state);
+      },
+    });
+    this.menu = new ListMenu(this.ui, `${this.memberName(state, id)} wears…`, items, () => this.showGear(state));
+  }
+
   /** Use healing items outside battle. */
   private showItems(state: GameState): void {
     this.clearUi();
@@ -249,7 +348,7 @@ export class App {
       action: () => this.showItemTarget(state, id),
     }));
     if (items.length === 0) items.push({ label: 'Nothing to use', disabled: true, action: () => undefined });
-    this.menu = new ListMenu(this.ui, this.partySummary(state), items, () => this.showPause());
+    this.menu = new ListMenu(this.ui, this.partySummary(state), items, () => this.showParty(state));
   }
 
   private showItemTarget(state: GameState, itemId: string): void {
