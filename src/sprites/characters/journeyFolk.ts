@@ -32,6 +32,13 @@ export const JOURNEY_FOLK: FolkSpec[] = [
   { id: 'inspector', name: 'Inspector', build: 'average', skin: '#e4b498', hair: '#3a3230', hairStyle: 'short', top: '#26242c', topStyle: 'long', bottom: '#26242c', shoes: '#141418', hat: { style: 'flatcap', colour: '#26242c' }, extras: ['badge'] },
   { id: 'sorrel', name: 'Deputy Inspector Sorrel', build: 'slim', skin: '#f0c4a8', hair: '#a4502e', hairStyle: 'curly', top: '#24222a', topStyle: 'jacket', bottom: '#24222a', shoes: '#121216', hat: { style: 'flatcap', colour: '#24222a' }, accent: '#a4502e', extras: ['badge', 'clipboard'] },
   { id: 'vane', name: 'Chief Inspector Vane', build: 'slim', skin: '#f0d2c0', hair: '#e8dcb8', hairStyle: 'bun', top: '#18161c', topStyle: 'long', bottom: '#18161c', shoes: '#0c0c10', accent: '#d8c070', extras: ['badge', 'chain'] },
+  // Kingsend.
+  { id: 'pmg', name: 'Postmaster General', build: 'stout', skin: '#f0c8b0', hair: '#c8c4bc', hairStyle: 'bald', top: '#3d4a6a', topStyle: 'long', bottom: '#2f3a52', shoes: '#1e1e24', accent: '#d3a648', extras: ['sash', 'chain', 'moustache'] },
+  { id: 'royalguard', name: 'Royal Guard', build: 'average', skin: '#e0b090', hair: '#4a3a2a', hairStyle: 'short', top: '#2e4a8a', topStyle: 'jacket', bottom: '#e8dcc0', shoes: '#1e1e24', hat: { style: 'flatcap', colour: '#1e2440' }, accent: '#b83a3a', extras: ['sash', 'badge'] },
+  { id: 'arcadist', name: 'Shopkeeper', build: 'slim', skin: '#e8c0a0', hair: '#6a4a3a', hairStyle: 'tied', top: '#6a3a5a', topStyle: 'dress', bottom: '#4a2a40', skirt: true, shoes: '#2a2026', apron: '#e8e0cc' },
+  { id: 'kinn', name: 'Innkeeper', build: 'stout', skin: '#d8a888', hair: '#3a2e26', hairStyle: 'short', top: '#7a5a3a', topStyle: 'shirt', bottom: '#4a3e34', shoes: '#2e2620', apron: '#e8e0cc', extras: ['moustache'] },
+  { id: 'pip', name: 'Pip', build: 'child', skin: '#f0c8a8', hair: '#c8784a', hairStyle: 'curly', top: '#d8a040', topStyle: 'shirt', bottom: '#4a5a8a', shoes: '#3a2e26' },
+  { id: 'hqclerk', name: 'Post clerk', build: 'slim', skin: '#e8c8b0', hair: '#3a3230', hairStyle: 'short', top: '#3d4a6a', topStyle: 'jacket', bottom: '#2f3a52', shoes: '#1e1e24', hat: { style: 'flatcap', colour: '#3d4a6a' }, extras: ['glasses'] },
 ];
 
 export const JOURNEY_FOLK_SPRITES = JOURNEY_FOLK.map(folkSprites);

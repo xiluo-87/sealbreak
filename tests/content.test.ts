@@ -126,12 +126,17 @@ describe('cutscenes', () => {
   });
 });
 
+/** Flags written by game code (src/game/travel.ts and the app), not by dialogue or cutscenes. */
+const CODE_FLAGS = ['stop', 'reached.kingsend', 'spare.days', 'away', 'final.result', 'final.done', 'meal.buff'];
+
 describe('story flags', () => {
   it('every flag that is read is set somewhere', () => {
     const written = new Set([
       ...allEffects().flatMap(flagsWritten),
       ...Object.values(ENCOUNTERS).flatMap((e) => (e.wonFlag ? [e.wonFlag] : [])),
       ...LETTERS.flatMap((l) => l.reward.flags ?? []),
+      // Set by code rather than data: travel, the final fight and the endings.
+      ...CODE_FLAGS,
     ]);
     for (const c of allConditions()) for (const f of flagsRead(c)) expect(written.has(f), `flag ${f} is read but never set`).toBe(true);
   });

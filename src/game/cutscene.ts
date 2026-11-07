@@ -16,7 +16,9 @@ export type CutStep =
   | { warp: { map: string; x: number; y: number; facing: Dir } }
   | { battle: string }
   /** Shows a letter in the reader (by id, including key letters such as FENN), with an optional line above it. */
-  | { read: string; intro?: string };
+  | { read: string; intro?: string }
+  /** The story is over: show the ending it has reached. */
+  | { ending: true };
 
 /** Any step can be made to run only when a condition holds. */
 export type CutsceneStep = CutStep & { if?: Condition };

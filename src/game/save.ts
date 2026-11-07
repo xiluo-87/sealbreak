@@ -248,3 +248,28 @@ export function browserStorage(): StorageLike | null {
     return null;
   }
 }
+
+export const ENDINGS_KEY = 'sealbreak.endings.v1';
+
+/** Endings reached in any game, for the title screen. Survives missing or corrupt data. */
+export function endingsFound(storage: StorageLike | null): string[] {
+  let raw: unknown = [];
+  try {
+    raw = JSON.parse(storage?.getItem(ENDINGS_KEY) ?? '[]');
+  } catch {
+    raw = [];
+  }
+  return Array.isArray(raw) ? [...new Set(raw.filter((x): x is string => typeof x === 'string'))] : [];
+}
+
+export function recordEnding(storage: StorageLike | null, id: string): void {
+  const found = endingsFound(storage);
+  // The two Dead Letter endings count as one.
+  const key = id === 'furnace' ? 'deadline' : id;
+  if (found.includes(key)) return;
+  try {
+    storage?.setItem(ENDINGS_KEY, JSON.stringify([...found, key]));
+  } catch {
+    // Not being able to record it is no reason to stop.
+  }
+}

@@ -1171,3 +1171,62 @@ body.touch .battle-menu {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
+
+/* The ending. */
+.ending {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14, 12, 20, 0.92);
+  color: #f3ead6;
+  cursor: pointer;
+}
+
+.ending-page {
+  max-width: calc(var(--u) * 460);
+  padding: calc(var(--u) * 16);
+  text-align: center;
+}
+
+.ending-page h2 {
+  margin: 0 0 calc(var(--u) * 10);
+  font-size: calc(var(--tu) * 20);
+  letter-spacing: 0.04em;
+  color: #e8c46a;
+}
+
+.ending-page p {
+  margin: calc(var(--u) * 6) 0;
+  font-size: calc(var(--tu) * 11);
+  line-height: 1.45;
+}
+
+.ending-page footer {
+  margin-top: calc(var(--u) * 14);
+  font-size: calc(var(--tu) * 8);
+  opacity: 0.6;
+}
+
+.tracking {
+  margin: calc(var(--u) * 8) auto 0;
+  border-collapse: collapse;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: calc(var(--tu) * 8);
+  text-align: left;
+}
+
+.tracking th,
+.tracking td {
+  padding: calc(var(--u) * 2) calc(var(--u) * 6);
+  border-bottom: 1px dashed rgba(243, 234, 214, 0.35);
+}
+
+.title .endings-found {
+  display: block;
+  margin-top: calc(var(--u) * 6);
+  font-size: calc(var(--tu) * 9);
+  opacity: 0.75;
+}

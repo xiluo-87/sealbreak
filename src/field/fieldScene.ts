@@ -39,6 +39,8 @@ export interface FieldHooks {
   open(kind: 'shop' | 'inn' | 'travel', id: string, done: () => void): void;
   /** A travel exit: choose a road on (`leave`), or come back from a detour (`return`). */
   travel(kind: 'leave' | 'return'): void;
+  /** The story has ended. */
+  ending(): void;
   /** Shows a letter in the reader, with an optional line above it; `done` runs when it is closed. */
   read(letter: string, intro: string | undefined, done: () => void): void;
 }
@@ -374,6 +376,12 @@ export class FieldScene implements Scene {
           this.inBattle = false;
           next();
         });
+      }
+    } else if ('ending' in step) {
+      if (!run.started) {
+        run.started = true;
+        this.cutscene = null;
+        this.hooks.ending();
       }
     } else if ('read' in step) {
       if (!run.started) {

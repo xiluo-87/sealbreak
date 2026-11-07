@@ -345,6 +345,7 @@ export const ENCOUNTERS: Record<string, EncounterDef> = {
   stairs: fight('stairs', ['gull', 'crab', 'gull'], 'gulls', { wonFlag: 'stairs.won' }),
   wick: fight('wick', ['raider', 'wick', 'raider'], 'salt', { escapable: true, wonFlag: 'wick.fought' }),
   sorrel: fight('sorrel', ['sorrel'], 'salt', { wonFlag: 'sorrel.beaten', backdrop: 'harbour' }),
+  office: fight('office', ['inspector-kingsend', 'inspector-kingsend', 'inspector-kingsend'], 'kingsend', { wonFlag: 'office.won' }),
   vane: fight('vane', ['vane'], 'kingsend', { backdrop: 'furnace' }),
   'vane-seniors': fight('vane-seniors', ['senior-kingsend', 'vane', 'senior-kingsend'], 'kingsend', { backdrop: 'furnace' }),
 };

@@ -352,6 +352,8 @@ Checked in this order when the final fight resolves:
 4. **Open Book.** 8 or more letters were opened. The Rookie reads everything aloud at Kingsend. The forgeries become public and the country is split about it: some are furious and some are grateful.
 5. **Dead Letter (furnace).** Any other result. The party wins, but the remaining letters burn and the Post closes quietly.
 
+After the final fight, a clerk brings the Decree of Closure to be countersigned; if Biscuit's trust is high enough, the choice to let her have it appears there. Endings found are remembered across games and counted on the title screen, with the two Dead Letter endings counted as one.
+
 Each ending also shows a short epilogue for every recipient reached and every party member. Scenes depend on the choices made: truth or silence at each forged delivery, Fenn's letter, Juniper's feelings about Odile, and the Queen's audience (L17).
 
 ## 13. Character art

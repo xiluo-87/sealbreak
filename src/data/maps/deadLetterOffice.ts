@@ -1,0 +1,41 @@
+import type { MapDef } from '../../field/maps';
+
+/** The Dead Letter Office: shelves of undeliverable mail, and the furnace at the end. */
+export const DEAD_LETTER_OFFICE: MapDef = {
+  id: 'dead-letter-office',
+  name: 'The Dead Letter Office',
+  kind: 'interior',
+  region: 'kingsend',
+  theme: 'office',
+  grid: [
+    'wWWWWWWWWWWWWWWWWWWWWw',
+    'wWWWWWWWWWWWWWWWWWWWWw',
+    'w--------vvvv--------w',
+    'w--------------------w',
+    'w-ssssss------ssssss-w',
+    'w--------------------w',
+    'w-------rrrrrr-------w',
+    'w-ssssssrrrrrrssssss-w',
+    'w-------rrrrrr-------w',
+    'w-------rrrrrr-------w',
+    'w-ssssssrrrrrrssssss-w',
+    'w-------rrrrrr-------w',
+    'w-------rrrrrr-------w',
+    'w-ssssssrrrrrrssssss-w',
+    'w-------rrrrrr-------w',
+    'w--------------------w',
+    'w----------m---------w',
+    'wWWWWWWWWWWDWWWWWWWWWw',
+  ],
+  exits: [{ x: 11, y: 17, to: 'kingsend', toX: 39, toY: 21, facing: 'down', if: { not: { flag: 'final.done' } }, blocked: 'no-going-back' }],
+  npcs: [{ id: 'vane', sprite: 'vane', x: 11, y: 4, facing: 'down', dialogue: 'vane-wait', if: { notFlag: 'final.done' } }],
+  events: [
+    { id: 'final-8', on: 'step', x: 8, y: 12, if: { notFlag: 'final.done' }, cutscene: 'final' },
+    { id: 'final-9', on: 'step', x: 9, y: 12, if: { notFlag: 'final.done' }, cutscene: 'final' },
+    { id: 'final-10', on: 'step', x: 10, y: 12, if: { notFlag: 'final.done' }, cutscene: 'final' },
+    { id: 'final-11', on: 'step', x: 11, y: 12, if: { notFlag: 'final.done' }, cutscene: 'final' },
+    { id: 'final-12', on: 'step', x: 12, y: 12, if: { notFlag: 'final.done' }, cutscene: 'final' },
+    { id: 'final-13', on: 'step', x: 13, y: 12, if: { notFlag: 'final.done' }, cutscene: 'final' },
+    { id: 'shelves', on: 'interact', x: 4, y: 4, dialogue: 'shelves' },
+  ],
+};

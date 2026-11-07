@@ -23,6 +23,12 @@ import { FENNS_LETTER, GRANS_LETTER, LETTER_BY_ID } from '../data/letters';
 import { equip } from '../letters/letters';
 import { ringBell } from '../game/encounters';
 import { applyAll } from '../game/conditions';
+import { type EndingId, selectEnding } from '../game/endings';
+import { endingPages } from '../data/endings';
+import { endingsFound, recordEnding } from '../game/save';
+import { officeInspectors } from '../game/travel';
+import { officeEncounter } from '../data/enemies';
+import { EndingScreen } from './ending';
 import { returnFromDetour, type TravelOption, travel, travelOptions } from '../game/travel';
 import { DEADLINE_DAY, type DetourId, DETOURS, type Place, type StopId, STOPS } from '../data/world';
 import { INNS, innPrice, priceOf, SHOPS, stockOf } from '../data/shops';
@@ -44,6 +50,8 @@ const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facin
   copperhill: { mapId: 'copperhill', x: 1, y: 10, facing: 'right' },
   'salt-road': { mapId: 'salt-road', x: 1, y: 11, facing: 'right' },
   salt: { mapId: 'salt-town', x: 1, y: 12, facing: 'right' },
+  'kingsend-road': { mapId: 'kingsend-road', x: 1, y: 11, facing: 'right' },
+  kingsend: { mapId: 'kingsend', x: 1, y: 13, facing: 'right' },
 };
 
 /** Story so far for each debug start: party, day, stop and flags. */
@@ -57,6 +65,8 @@ const REGION_STORY: Record<string, { party: PartyId[]; day: number; stop?: strin
   copperhill: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen'] },
   'salt-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past'] },
   salt: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 4, stop: 'salt', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'] },
+  'kingsend-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 5, stop: 'kingsend', flags: [...['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'], 'salt.arrived', 'harbour.ambush', 'sorrel.beaten', 'reveal.done', 'reached.kingsend'] },
+  kingsend: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 5, stop: 'kingsend', flags: [...['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen', 'cop.arrived', 'brass.beaten', 'fenn.past', 'salt.roadSeen'], 'salt.arrived', 'harbour.ambush', 'sorrel.beaten', 'reveal.done', 'reached.kingsend', 'kingsend.roadSeen'] },
 };
 
 function playTime(ms: number): string {
@@ -103,6 +113,7 @@ export class App {
   private field: FieldScene | null = null;
   private readonly reader: LetterReader;
   private satchel: Satchel | null = null;
+  private ending: EndingScreen | null = null;
 
   constructor(
     private readonly ui: HTMLElement,
@@ -150,6 +161,10 @@ export class App {
   /** Called every fixed step. Menus take input before the scene does. */
   update(ctx: SceneContext): void {
     this.toast.update(ctx.stepMs);
+    if (this.ending) {
+      this.ending.update(ctx.input);
+      return;
+    }
     if (this.satchel) {
       this.satchel.update(ctx.input);
       return;
@@ -192,6 +207,13 @@ export class App {
     const p = document.createElement('p');
     p.textContent = 'The Royal Post closes in seven days.';
     this.titleEl.append(h, p);
+    const found = endingsFound(this.storage);
+    if (found.length > 0) {
+      const e = document.createElement('small');
+      e.className = 'endings-found';
+      e.textContent = `Endings found: ${found.length} of 4`;
+      this.titleEl.append(e);
+    }
     this.ui.appendChild(this.titleEl);
     const latest = latestSlot(this.storage);
     const saves = readSaves(this.storage);
@@ -243,6 +265,10 @@ export class App {
         else if (kind === 'inn') this.showInn(state, id, done);
         else this.showTravel(state, done);
       },
+      ending: () => {
+        const id = selectEnding(state);
+        this.showEnding(state, id);
+      },
       read: (id, intro, done) => {
         const l = id === 'FENN' ? FENNS_LETTER : id === 'GRAN' ? GRANS_LETTER : LETTER_BY_ID[id];
         if (l) this.reader.show(l, 'broken', done, intro);
@@ -257,9 +283,12 @@ export class App {
     this.scene = field;
   }
 
-  private startBattle(encounter: string, done: (result: 'victory' | 'fled' | 'delivered', delivered: string | null) => void): void {
+  private startBattle(requested: string, done: (result: 'victory' | 'fled' | 'delivered', delivered: string | null) => void): void {
     const field = this.field;
     if (!field) return;
+    // Outside the office: one Inspector per day short of the deadline. Vane brings Seniors at high Heat.
+    const encounter =
+      requested === 'office' ? officeEncounter(officeInspectors(field.state), field.state.heat >= 6).id : requested === 'vane' && field.state.heat >= 8 ? 'vane-seniors' : requested;
     const enc = getEncounter(encounter);
     const battle = new BattleScene(field.state, encounter, this.ui, {
       onEnd: (result) => {
@@ -269,6 +298,10 @@ export class App {
           return;
         }
         if (result === 'victory' && enc?.wonFlag) field.state.flags[enc.wonFlag] = true;
+        if (encounter === 'vane' || encounter === 'vane-seniors') {
+          field.state.flags['final.result'] = result;
+          field.state.flags['final.done'] = true;
+        }
         if (field.state.flags['meal.buff']) field.state.flags = Object.fromEntries(Object.entries(field.state.flags).filter(([k]) => k !== 'meal.buff'));
         this.scene = field;
         // Letters whose seals broke in the fight can be read now.
@@ -364,7 +397,7 @@ export class App {
     if (o.days > 0) applyAll([{ heal: 1, fp }], state);
     const place = travel(state, o);
     if (state.day > DEADLINE_DAY || (o.to === 'kingsend' && !state.flags['reached.kingsend'])) {
-      this.showEnding(state, 'deadline');
+      this.showEnding(state, selectEnding(state));
       return;
     }
     this.arrive(state, place, o.days > 0);
@@ -439,17 +472,18 @@ export class App {
     );
   }
 
-  /** The endings arrive in Milestone 8; until then, only the deadline can end the game. */
-  private showEnding(state: GameState, id: 'deadline'): void {
+  /** The story is over: record which ending was reached and play it out. */
+  private showEnding(state: GameState, id: EndingId): void {
     this.clearUi();
     this.field?.destroy();
     this.field = null;
     this.scene = new TitleScene();
-    const lines =
-      id === 'deadline'
-        ? ['Dead Letter', `The sun goes down on the seventh day. The Royal Post closes with ${Object.values(state.letters).filter((l) => l.state !== 'delivered').length} letters still in the sack.`, 'At the Dead Letter Office in Kingsend, the furnace is lit.']
-        : [];
-    this.menu = new ListMenu(this.ui, lines.join('\n\n'), [{ label: 'Title screen', action: () => this.showTitle() }], undefined, 'menu ending-menu');
+    recordEnding(this.storage, id);
+    this.ending = new EndingScreen(this.ui, endingPages(state, id), this.reader, () => {
+      this.ending?.destroy();
+      this.ending = null;
+      this.showTitle();
+    });
   }
 
   private showPause(): void {
