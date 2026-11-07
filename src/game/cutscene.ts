@@ -14,7 +14,9 @@ export type CutStep =
   | { then: Effect[] }
   | { fade: 'out' | 'in' }
   | { warp: { map: string; x: number; y: number; facing: Dir } }
-  | { battle: string };
+  | { battle: string }
+  /** Shows a letter in the reader (by id, including key letters such as FENN). */
+  | { read: string };
 
 export interface Cutscene {
   id: string;

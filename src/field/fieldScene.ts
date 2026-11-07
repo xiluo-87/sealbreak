@@ -35,6 +35,12 @@ export interface FieldHooks {
   battle(encounter: string, done: (result: 'victory' | 'fled' | 'delivered', delivered: string | null) => void): void;
   /** A short message, such as a hint. */
   notify(text: string): void;
+  /** Opens a shop, an inn or the road choices; `done` runs when it closes. */
+  open(kind: 'shop' | 'inn' | 'travel', id: string, done: () => void): void;
+  /** A travel exit: choose a road on (`leave`), or come back from a detour (`return`). */
+  travel(kind: 'leave' | 'return'): void;
+  /** Shows a letter in the reader; `done` runs when it is closed. */
+  read(letter: string, done: () => void): void;
 }
 
 interface Npc {
@@ -196,16 +202,32 @@ export class FieldScene implements Scene {
     this.syncFollowers();
     const deliveries = d?.run.out.deliveries ?? [];
     const fights = [...(d?.run.out.fights ?? [])];
-    // Fights a conversation started come after it, then whatever was waiting.
+    const opens = [...(d?.run.out.opens ?? [])];
+    // Fights a conversation started come after it, then shops or inns, then whatever was waiting.
     const finish = (): void => {
+      if (fights.length === 0 && opens.length > 0) {
+        const o = opens.shift();
+        if (o) {
+          this.inBattle = true;
+          this.hooks.open(o.open, o.id, () => {
+            this.inBattle = false;
+            finish();
+          });
+          return;
+        }
+      }
       const f = fights.shift();
-      if (f === 'random') {
+      if (!f) {
+        d?.onDone();
+        return;
+      }
+      let id = f.id;
+      if (id === 'random') {
         const rng = Rng.fromState(this.state.rng);
-        const id = REGIONS[this.map.def.region] ? battleFor(this.state, this.map.def.region, rng) : 'road-hogs';
+        id = REGIONS[this.map.def.region] ? battleFor(this.state, this.map.def.region, rng) : 'road-hogs';
         this.state.rng = rng.getState();
-        this.fight(id, finish);
-      } else if (f) this.fight(f, finish);
-      else d?.onDone();
+      }
+      this.fight(id, finish, f.after);
     };
     if (d && deliveries.length > 0) {
       // Report what the delivery brought, then carry on.
@@ -217,12 +239,18 @@ export class FieldScene implements Scene {
     finish();
   }
 
+  /** Runs a dialogue by id (used by the camp menu). */
+  talk(id: string, done: () => void): void {
+    this.say(id, done);
+  }
+
   /** Starts a battle. A recipient who was handed their letter mid-fight then reacts to it. */
-  fight(id: string, after: () => void = () => undefined): void {
+  fight(id: string, after: () => void = () => undefined, won?: string): void {
     this.inBattle = true;
     this.hooks.battle(id, (result, delivered) => {
       this.inBattle = false;
       if (result === 'delivered' && delivered && DIALOGUE[`recipient-${delivered}`]) this.say(`recipient-${delivered}`, after);
+      else if (result === 'victory' && won) this.say(won, after);
       else after();
     });
   }
@@ -341,6 +369,15 @@ export class FieldScene implements Scene {
           next();
         });
       }
+    } else if ('read' in step) {
+      if (!run.started) {
+        run.started = true;
+        this.inBattle = true;
+        this.hooks.read(step.read, () => {
+          this.inBattle = false;
+          next();
+        });
+      }
     } else {
       const w = step.warp;
       this.loadMap(w.map, w.x, w.y, w.facing, false);
@@ -372,6 +409,11 @@ export class FieldScene implements Scene {
     if (exit && !check(exit.if, this.state)) {
       m.facing = dir;
       if (fresh && exit.blocked) this.say(exit.blocked, () => undefined);
+      return;
+    }
+    if (exit?.travel) {
+      m.facing = dir;
+      if (fresh) this.hooks.travel(exit.travel);
       return;
     }
     const fx = m.tx;

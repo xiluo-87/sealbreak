@@ -143,6 +143,8 @@ export class Battle {
     const members: PartyId[] = [...game.party];
     for (const g of enc.guests ?? []) if (!members.includes(g)) members.push(g);
     for (const id of members) this.combatants.push(this.memberCombatant(id));
+    // Supper at an inn with the eel pie recipe sets everyone up for the next fight.
+    if (game.flags['meal.buff']) for (const c of this.combatants) c.atkBuff = { mult: 1.1, turns: 999 };
     enc.enemies.forEach((eid, i) => this.combatants.push(this.enemyCombatant(eid, `e${i}`)));
     this.nameEnemies();
     this.biscuit = !!game.flags['biscuit.joined'];

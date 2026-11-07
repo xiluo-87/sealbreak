@@ -15,14 +15,18 @@ import { parseMap } from '../field/maps';
 import { TILE } from '../field/movement';
 import { browserStorage, latestSlot, readSaves, SLOT_IDS, type SlotId, type StorageLike, writeSlot } from '../game/save';
 import type { Scene, SceneContext } from '../game/scene';
-import { DEFAULT_NAME, type GameState, MAX_NAME_LENGTH, newGame, PARTY_IDS } from '../game/state';
+import { DEFAULT_NAME, type GameState, MAX_NAME_LENGTH, newGame, PARTY_IDS, type PartyId } from '../game/state';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { paintGround } from '../render/tileArt';
 import { ACCESSORIES } from '../data/accessories';
-import { LETTER_BY_ID } from '../data/letters';
+import { FENNS_LETTER, GRANS_LETTER, LETTER_BY_ID } from '../data/letters';
 import { equip } from '../letters/letters';
 import { ringBell } from '../game/encounters';
 import { applyAll } from '../game/conditions';
+import { returnFromDetour, type TravelOption, travel, travelOptions } from '../game/travel';
+import { DEADLINE_DAY, type DetourId, DETOURS, type Place, type StopId, STOPS } from '../data/world';
+import { INNS, innPrice, priceOf, SHOPS, stockOf } from '../data/shops';
+import { DIALOGUE } from '../data/dialogue';
 import { LetterReader } from './letterReader';
 import { ListMenu, type MenuItem } from './menu';
 import type { TouchMode } from '../input/touch';
@@ -33,6 +37,22 @@ import { Toast } from './toast';
 const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facing'>> = {
   thistle: { mapId: 'thistle-cross', x: 19, y: 9, facing: 'down' },
   'thistle-road': { mapId: 'thistle-road', x: 2, y: 5, facing: 'right' },
+  gate: { mapId: 'thistle-road', x: 81, y: 4, facing: 'right' },
+  'fen-road': { mapId: 'fen-road', x: 1, y: 14, facing: 'right' },
+  fen: { mapId: 'bellwether-fen', x: 1, y: 14, facing: 'right' },
+  'copperhill-road': { mapId: 'copperhill-road', x: 1, y: 12, facing: 'right' },
+  copperhill: { mapId: 'copperhill', x: 1, y: 10, facing: 'right' },
+};
+
+/** Story so far for each debug start: party, day, stop and flags. */
+const REGION_STORY: Record<string, { party: PartyId[]; day: number; stop?: string; flags: string[] }> = {
+  thistle: { party: ['rookie', 'odile'], day: 1, flags: [] },
+  'thistle-road': { party: ['rookie', 'odile'], day: 1, flags: [] },
+  gate: { party: ['rookie', 'odile', 'fenn'], day: 1, flags: ['toll.won', 'road.seen'] },
+  'fen-road': { party: ['rookie', 'odile', 'fenn'], day: 2, stop: 'fen', flags: ['toll.won', 'road.seen'] },
+  fen: { party: ['rookie', 'odile', 'fenn'], day: 2, stop: 'fen', flags: ['toll.won', 'road.seen', 'fen.roadSeen'] },
+  'copperhill-road': { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined'] },
+  copperhill: { party: ['rookie', 'odile', 'fenn', 'juniper'], day: 3, stop: 'copperhill', flags: ['toll.won', 'road.seen', 'fen.roadSeen', 'fen.arrived', 'grist.beaten', 'juniper.met', 'juniper.joined', 'cop.roadSeen'] },
 };
 
 function playTime(ms: number): string {
@@ -98,7 +118,11 @@ export class App {
   private debugState(region: string, level: number, heat: number): GameState {
     const s = newGame(DEFAULT_NAME, this.seed);
     Object.assign(s.flags, { 'intro.arrived': true, 'intro.sackFell': true, 'intro.sackTaken': true, 'intro.ratsBeaten': true, 'intro.lockingUp': true, 'intro.done': true, 'biscuit.joined': true, 'hint.satchel': true });
-    s.party = ['rookie', 'odile'];
+    const story = REGION_STORY[region] ?? REGION_STORY.thistle;
+    s.party = [...(story?.party ?? ['rookie', 'odile'])];
+    s.day = story?.day ?? 1;
+    if (story?.stop) s.flags.stop = story.stop;
+    for (const f of story?.flags ?? []) s.flags[f] = true;
     s.letters.L02 = { state: 'sealed', holder: 'rookie' };
     for (const id of PARTY_IDS) {
       const st = statsAt(id, level);
@@ -210,6 +234,20 @@ export class App {
       openMenu: () => this.showPause(),
       battle: (id, done) => this.startBattle(id, done),
       notify: (text) => this.toast.show(text, 3200),
+      open: (kind, id, done) => {
+        if (kind === 'shop') this.showShop(state, id, done);
+        else if (kind === 'inn') this.showInn(state, id, done);
+        else this.showTravel(state, done);
+      },
+      read: (id, done) => {
+        const l = id === 'FENN' ? FENNS_LETTER : id === 'GRAN' ? GRANS_LETTER : LETTER_BY_ID[id];
+        if (l) this.reader.show(l, 'broken', done);
+        else done();
+      },
+      travel: (kind) => {
+        if (kind === 'leave') this.showTravel(state, () => this.clearUi());
+        else this.arrive(state, returnFromDetour(state), false);
+      },
     });
     this.field = field;
     this.scene = field;
@@ -227,6 +265,7 @@ export class App {
           return;
         }
         if (result === 'victory' && enc?.wonFlag) field.state.flags[enc.wonFlag] = true;
+        if (field.state.flags['meal.buff']) field.state.flags = Object.fromEntries(Object.entries(field.state.flags).filter(([k]) => k !== 'meal.buff'));
         this.scene = field;
         // Letters whose seals broke in the fight can be read now.
         const opened = battle.battle.broken.map((id) => LETTER_BY_ID[id]).filter((l) => !!l);
@@ -255,6 +294,158 @@ export class App {
     if (s) items.push({ label: 'Try again', detail: slotDetail(s), action: () => this.startField(s) });
     items.push({ label: 'Title screen', action: () => this.showTitle() });
     this.menu = new ListMenu(this.ui, 'The party has fallen', items, undefined, 'menu gameover-menu');
+  }
+
+  // -------------------------------------------------------------------------
+  // The journey: road choices, camp, shops and inns.
+
+  private showTravel(state: GameState, back: () => void): void {
+    this.clearUi();
+    // Roads to places not built yet stay closed.
+    const opts = travelOptions(state).filter((o) => !!MAPS[o.kind === 'next' ? (STOPS[o.to as StopId].arrive?.map ?? '') : DETOURS[o.to as DetourId].arrive.map]);
+    const items: MenuItem[] = opts.map((o) => ({
+      label: `${o.kind === 'detour' ? 'Detour: ' : ''}${o.name}`,
+      detail: `${o.days === 0 ? 'No days' : o.days === 1 ? '1 day' : `${o.days} days`} · ${o.blurb}${o.late ? ' · Kingsend would be out of reach by the seventh day' : ''}`,
+      action: () => (o.late ? this.confirmLate(state, o, back) : this.showCamp(state, o)),
+    }));
+    items.push({ label: 'Not yet', action: () => back() });
+    this.menu = new ListMenu(this.ui, `The road · Day ${state.day} of ${DEADLINE_DAY}`, items, () => back(), 'menu travel-menu');
+  }
+
+  private confirmLate(state: GameState, o: TravelOption, back: () => void): void {
+    this.clearUi();
+    this.menu = new ListMenu(
+      this.ui,
+      'If you go this way, the Post will close before you reach Kingsend. Everything left in the sack goes to the furnace.',
+      [
+        { label: 'Go anyway', action: () => this.showCamp(state, o) },
+        { label: 'Think again', action: () => this.showTravel(state, back) },
+      ],
+      () => this.showTravel(state, back),
+    );
+  }
+
+  /** The night before setting out: talk, sort the satchel, then sleep. */
+  private showCamp(state: GameState, o: TravelOption): void {
+    this.clearUi();
+    const talked = state.flags[`camp.talked.${state.day}`] === true;
+    this.menu = new ListMenu(
+      this.ui,
+      `Camp · Night of day ${state.day}`,
+      [
+        { label: 'Talk by the fire', disabled: talked || !DIALOGUE.camp, action: () => this.campTalk(state, o) },
+        { label: 'Satchel', detail: 'Read, sort and reseal letters', action: () => this.campSatchel(state, o) },
+        { label: o.days === 0 ? `Set off for ${o.name}` : `Sleep, then set off for ${o.name}`, action: () => this.setOff(state, o) },
+      ],
+      undefined,
+      'menu camp-menu',
+    );
+  }
+
+  private campTalk(state: GameState, o: TravelOption): void {
+    this.clearUi();
+    state.flags[`camp.talked.${state.day}`] = true;
+    this.field?.talk('camp', () => this.showCamp(state, o));
+  }
+
+  private campSatchel(state: GameState, o: TravelOption): void {
+    this.clearUi();
+    this.satchel = new Satchel(this.ui, state, this.reader, () => this.showCamp(state, o), (t) => this.toast.show(t));
+  }
+
+  private setOff(state: GameState, o: TravelOption): void {
+    this.clearUi();
+    // A night's rest: full health, and half FP (all of it with the abbey's blessing).
+    const fp = state.flags['abbey.blessing'] ? 1 : 0.5;
+    if (o.days > 0) applyAll([{ heal: 1, fp }], state);
+    const place = travel(state, o);
+    if (state.day > DEADLINE_DAY || (o.to === 'kingsend' && !state.flags['reached.kingsend'])) {
+      this.showEnding(state, 'deadline');
+      return;
+    }
+    this.arrive(state, place, o.days > 0);
+  }
+
+  /** Moves the party to a place and starts the field there. */
+  private arrive(state: GameState, place: Place, newDay: boolean): void {
+    Object.assign(state, { mapId: place.map, x: place.x, y: place.y, facing: place.facing });
+    this.startField(state);
+    if (newDay) {
+      if (writeSlot(this.storage, 'auto', state, Date.now())) this.toast.show(`Day ${state.day} · Saved`, 2400);
+    }
+  }
+
+  private showShop(state: GameState, id: string, done: () => void): void {
+    const shop = SHOPS[id];
+    if (!shop) {
+      done();
+      return;
+    }
+    this.clearUi();
+    const items: MenuItem[] = stockOf(shop, state.flags).map((item) => {
+      const price = priceOf(shop, item, state.flags);
+      return {
+        label: `${ITEMS[item]?.name ?? item} · ${price} coin`,
+        detail: `${ITEMS[item]?.description ?? ''} You have ${state.items[item] ?? 0}.`,
+        disabled: state.coin < price,
+        action: () => {
+          state.coin -= price;
+          state.items[item] = Math.min(99, (state.items[item] ?? 0) + 1);
+          this.toast.show(`Bought a ${ITEMS[item]?.name.toLowerCase() ?? item}`);
+          this.showShop(state, id, done);
+        },
+      };
+    });
+    items.push({ label: 'Leave', action: () => done() });
+    this.menu = new ListMenu(this.ui, `${shop.name} · ${state.coin} coin`, items, () => done(), 'menu shop-menu');
+  }
+
+  private showInn(state: GameState, id: string, done: () => void): void {
+    const inn = INNS[id];
+    if (!inn) {
+      done();
+      return;
+    }
+    this.clearUi();
+    const price = innPrice(inn, state.flags);
+    const meal = inn.mealWith && state.flags[inn.mealWith];
+    this.menu = new ListMenu(
+      this.ui,
+      `${inn.name} · ${state.coin} coin`,
+      [
+        {
+          label: price === 0 ? 'Take a room (free)' : `Take a room · ${price} coin`,
+          detail: meal ? 'Rest fully, and eel pie for supper: ATK up in the next fight' : 'Rest and recover fully',
+          disabled: state.coin < price,
+          action: () => {
+            state.coin -= price;
+            applyAll([{ heal: 1, fp: 1 }], state);
+            for (const m of state.party) {
+              const st = statsAt(m, state.members[m].level);
+              state.members[m].hp = st.hp;
+            }
+            if (meal) state.flags['meal.buff'] = true;
+            this.toast.show(meal ? 'You sleep well, after a great deal of pie.' : 'You sleep well.', 2600);
+            done();
+          },
+        },
+        { label: 'Not now', action: () => done() },
+      ],
+      () => done(),
+    );
+  }
+
+  /** The endings arrive in Milestone 8; until then, only the deadline can end the game. */
+  private showEnding(state: GameState, id: 'deadline'): void {
+    this.clearUi();
+    this.field?.destroy();
+    this.field = null;
+    this.scene = new TitleScene();
+    const lines =
+      id === 'deadline'
+        ? ['Dead Letter', `The sun goes down on the seventh day. The Royal Post closes with ${Object.values(state.letters).filter((l) => l.state !== 'delivered').length} letters still in the sack.`, 'At the Dead Letter Office in Kingsend, the furnace is lit.']
+        : [];
+    this.menu = new ListMenu(this.ui, lines.join('\n\n'), [{ label: 'Title screen', action: () => this.showTitle() }], undefined, 'menu ending-menu');
   }
 
   private showPause(): void {

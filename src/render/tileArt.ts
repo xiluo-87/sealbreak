@@ -17,7 +17,7 @@ export function hash01(x: number, y: number, salt = 0): number {
   return (h >>> 0) / 4294967296;
 }
 
-const C = {
+const BASE = {
   grass: '#76844f',
   grassDark: '#6b7948',
   grassLight: '#818f58',
@@ -57,7 +57,85 @@ const C = {
   iron: '#3a3a42',
   paper: '#efe6d2',
   brass: '#d3a648',
+  plank: '#8a6a48',
+  plankDark: '#6b4f35',
+  plankLight: '#a3825c',
+  reed: '#8a8a52',
+  reedDark: '#6a6a3e',
+  reedTip: '#b0985a',
+  slag: '#3e3a3c',
+  slagLight: '#5a5456',
+  ember: '#d06a2a',
+  rail: '#6a6e74',
+  sleeper: '#5a4232',
+  rock: '#8a847a',
+  rockDark: '#6a645c',
+  rockLight: '#a8a296',
 };
+
+type Palette = typeof BASE;
+
+/** Per-region colours (design 14): Fen blue-grey, Copperhill rust and soot, Salt sand and teal, Kingsend stone. */
+const THEMES: Record<string, Partial<Palette>> = {
+  fen: {
+    grass: '#6e7c5a', grassDark: '#62705a', grassLight: '#7c8a66', tuft: '#8a9670',
+    leafA: '#9a8a5a', leafB: '#7a8a6a', leafC: '#6a6a4a',
+    dirt: '#7e7464', dirtDark: '#6e6456', dirtLight: '#8e8472',
+    water: '#5a7484', waterDark: '#4a6474', waterLight: '#7a96a6', bank: '#5a604a',
+  },
+  abbey: { grass: '#6e8456', grassDark: '#62784c', grassLight: '#7c925e', leafA: '#8a9a5a', leafB: '#a89a5a' },
+  copperhill: {
+    grass: '#7e7650', grassDark: '#706848', grassLight: '#8c845c', tuft: '#9a9064',
+    leafA: '#8a5a3a', leafB: '#6a5040', leafC: '#5a4434',
+    dirt: '#8a6a52', dirtDark: '#7a5c46', dirtLight: '#9a7a60',
+    stone: '#7e7874', stoneLight: '#908a84', stoneDark: '#686260', mortar: '#5e5856',
+  },
+  oldfront: {
+    grass: '#6e6e4c', grassDark: '#626244', grassLight: '#7a7a56', tuft: '#88865e',
+    leafA: '#6a5a3a', leafB: '#5a5038', leafC: '#4a4230',
+    dirt: '#6e5e48', dirtDark: '#5e5040', dirtLight: '#7e6c54',
+  },
+  salt: {
+    grass: '#cdbd94', grassDark: '#bcac84', grassLight: '#ddd0aa', tuft: '#a8ac80',
+    leafA: '#8aa890', leafB: '#c8b890', leafC: '#a89878',
+    dirt: '#b8a07a', dirtDark: '#a89070', dirtLight: '#c8b08a',
+    stone: '#c8c0b0', stoneLight: '#dad2c2', stoneDark: '#aaa292', mortar: '#9c9484',
+    water: '#3a8a8c', waterDark: '#2e7476', waterLight: '#5aa8a8', bank: '#a89a72',
+  },
+  gulls: {
+    grass: '#8a9a72', grassDark: '#7c8c66', grassLight: '#98a87e', tuft: '#a8b48a',
+    dirt: '#a89878', dirtDark: '#988868', dirtLight: '#b8a888',
+    water: '#3a7a8c', waterDark: '#2e6676', waterLight: '#5a9aa8', bank: '#7a7a62',
+  },
+  kingsend: {
+    grass: '#5e7a4e', grassDark: '#526c44', grassLight: '#6a8858', tuft: '#7a9464',
+    leafA: '#5e7a4e', leafB: '#7a8a5a', leafC: '#4a5e3e',
+    stone: '#b4aea2', stoneLight: '#c6c0b4', stoneDark: '#9c968a', mortar: '#8a8478',
+    dirt: '#8e8270', dirtDark: '#7e7262', dirtLight: '#9e9280',
+  },
+  mine: { floor: '#4a4440', floorDark: '#3a3532', floorLight: '#5a524c', plaster: '#5a524a', plasterDark: '#4a433c', wainscot: '#3a3430' },
+  hall: { floor: '#7a5e44', floorDark: '#6a5038', floorLight: '#8a6c50', plaster: '#b8a88a', plasterDark: '#a4947a', wainscot: '#5a4434' },
+  office: { floor: '#5e5a62', floorDark: '#4e4a52', floorLight: '#6e6a72', plaster: '#8e8a86', plasterDark: '#7a7672', wainscot: '#3e3a40' },
+};
+
+/** Tree canopies per theme. */
+const CANOPY_THEMES: Record<string, string[][]> = {
+  fen: [['#7a8a6a', '#8e9e7a', '#5e6e52', '#a2b28a'], ['#6a7a5a', '#7e8e6a', '#4e5e44', '#92a27a'], ['#8a8a5a', '#9e9e6a', '#6a6a44', '#b2b27a']],
+  copperhill: [['#6a5a40', '#7e6c4c', '#4e4232', '#8e7c5a'], ['#5a5a48', '#6e6e58', '#42423a', '#7e7e66'], ['#7a5a3a', '#8e6c48', '#5a4230', '#9e7c56']],
+  oldfront: [['#5a5a40', '#6e6e4c', '#424232', '#7e7e5a'], ['#6a5e40', '#7e704c', '#4e4432', '#8e805a'], ['#5a5040', '#6e624c', '#423a32', '#7e725a']],
+  salt: [['#7a9a7a', '#8eae8a', '#5e7a5e', '#a2c29a'], ['#8aa080', '#9eb490', '#6a8062', '#b2c8a0'], ['#a89a6a', '#bcae7a', '#887a52', '#d0c28a']],
+  gulls: [['#6a8a6a', '#7e9e7a', '#4e6e52', '#92b28a'], ['#7a8a62', '#8e9e72', '#5e6e4a', '#a2b282'], ['#6a7a5a', '#7e8e6a', '#4e5e44', '#92a27a']],
+  kingsend: [['#4e6e42', '#628250', '#3a5434', '#76965e'], ['#5a7448', '#6e8858', '#42583a', '#829c66'], ['#4a6448', '#5e7858', '#36503a', '#728c66']],
+};
+
+let theme = 'thistle';
+const C: Palette = { ...BASE };
+
+/** Switches the palette to a region's colours. */
+export function setTheme(region: string): void {
+  theme = THEMES[region] || CANOPY_THEMES[region] ? region : 'thistle';
+  Object.assign(C, BASE, THEMES[theme] ?? {});
+}
 
 function px(g: G, color: string, x: number, y: number, w = 1, h = 1): void {
   g.fillStyle = color;
@@ -290,6 +368,77 @@ function tollgate(g: G, x: number, y: number, tx: number, ty: number, isGate: (d
   px(g, '#5a5048', x, y + 17, TILE, 1);
 }
 
+function boardwalk(g: G, x: number, y: number, tx: number, ty: number): void {
+  px(g, C.plank, x, y, TILE, TILE);
+  for (let r = 0; r < 4; r++) {
+    px(g, C.plankDark, x, y + r * 8 + 7, TILE, 1);
+    px(g, C.plankLight, x, y + r * 8, TILE, 1);
+    const seam = Math.floor(hash01(tx, ty * 4 + r, 1500) * 24) + 4;
+    px(g, C.plankDark, x + seam, y + r * 8, 1, 7);
+    if (hash01(tx, ty * 4 + r, 1501) < 0.4) px(g, C.iron, x + seam - 3, y + r * 8 + 3, 1, 1);
+  }
+}
+
+function reeds(g: G, x: number, y: number, tx: number, ty: number, water: boolean): void {
+  if (water) px(g, C.water, x, y, TILE, TILE);
+  else grass(g, x, y, tx, ty);
+  for (let i = 0; i < 16; i++) {
+    const rx = x + 1 + Math.floor(hash01(tx, ty, i + 1600) * 30);
+    const h = 10 + Math.floor(hash01(tx, ty, i + 1610) * 16);
+    px(g, i % 2 ? C.reed : C.reedDark, rx, y + TILE - h, 1, h);
+    if (i % 3 === 0) px(g, C.reedTip, rx, y + TILE - h - 3, 2, 4);
+  }
+}
+
+function slag(g: G, x: number, y: number, tx: number, ty: number): void {
+  grass(g, x, y, tx, ty);
+  g.fillStyle = C.slag;
+  g.beginPath();
+  g.moveTo(x + 2, y + 30);
+  g.lineTo(x + 10 + Math.floor(hash01(tx, ty, 1700) * 6), y + 6);
+  g.lineTo(x + 20, y + 10);
+  g.lineTo(x + 30, y + 30);
+  g.fill();
+  px(g, C.slagLight, x + 11, y + 9, 4, 2);
+  px(g, C.slagLight, x + 8, y + 16, 3, 2);
+  if (hash01(tx, ty, 1701) < 0.5) px(g, C.ember, x + 16, y + 22, 2, 1);
+}
+
+function rails(g: G, x: number, y: number, tx: number, ty: number): void {
+  dirt(g, x, y, tx, ty, () => true);
+  for (let i = 0; i < 4; i++) px(g, C.sleeper, x + 2, y + 2 + i * 8, 28, 4);
+  px(g, C.rail, x + 7, y, 2, TILE);
+  px(g, C.rail, x + 23, y, 2, TILE);
+}
+
+function rocks(g: G, x: number, y: number, tx: number, ty: number): void {
+  grass(g, x, y, tx, ty);
+  for (let i = 0; i < 3; i++) {
+    const cx = x + 6 + Math.floor(hash01(tx, ty, 1800 + i) * 20);
+    const cy = y + 10 + Math.floor(hash01(tx, ty, 1810 + i) * 14);
+    const r = 5 + Math.floor(hash01(tx, ty, 1820 + i) * 5);
+    blob(g, cx + 1, cy + 2, r, C.rockDark);
+    blob(g, cx, cy, r, C.rock);
+    blob(g, cx - 2, cy - 2, Math.max(1, r - 3), C.rockLight);
+  }
+}
+
+function grave(g: G, x: number, y: number, tx: number, ty: number): void {
+  grass(g, x, y, tx, ty);
+  px(g, C.shadow, x + 9, y + 26, 16, 3);
+  const cross = hash01(tx, ty, 1900) < 0.5;
+  if (cross) {
+    px(g, '#8a8478', x + 14, y + 6, 4, 22);
+    px(g, '#8a8478', x + 8, y + 11, 16, 4);
+    px(g, '#a09a8e', x + 14, y + 6, 1, 22);
+  } else {
+    px(g, '#8a8478', x + 9, y + 10, 14, 18);
+    px(g, '#a09a8e', x + 9, y + 10, 14, 2);
+    blob(g, x + 16, y + 11, 7, '#8a8478');
+    px(g, '#6e6a60', x + 12, y + 16, 8, 1);
+  }
+}
+
 function floor(g: G, x: number, y: number, tx: number, ty: number): void {
   px(g, C.floor, x, y, TILE, TILE);
   for (let i = 0; i < 4; i++) {
@@ -452,9 +601,10 @@ function blob(g: G, cx: number, cy: number, r: number, color: string): void {
 }
 
 export function treeSprite(variant: number): TallSprite {
-  const v = variant % CANOPIES.length;
-  return sprite(`tree${v}`, 48, 64, -8, -32, (g) => {
-    const [base, light, dark, hi] = CANOPIES[v] ?? CANOPIES[0] ?? [];
+  const canopies = CANOPY_THEMES[theme] ?? CANOPIES;
+  const v = variant % canopies.length;
+  return sprite(`${theme}:tree${v}`, 48, 64, -8, -32, (g) => {
+    const [base, light, dark, hi] = canopies[v] ?? canopies[0] ?? [];
     g.fillStyle = C.shadow;
     g.beginPath();
     g.ellipse(26, 59, 14, 4, 0, 0, Math.PI * 2);
@@ -533,9 +683,32 @@ export function topiarySprite(): TallSprite {
   });
 }
 
+export function memorialSprite(): TallSprite {
+  // A stone soldier on a plinth, polished at the names.
+  return sprite('memorial', 32, 72, 0, -40, (g) => {
+    g.fillStyle = C.shadow;
+    g.beginPath();
+    g.ellipse(17, 69, 14, 3, 0, 0, Math.PI * 2);
+    g.fill();
+    px(g, '#7e7872', 3, 46, 26, 24);
+    px(g, '#948e86', 3, 46, 26, 3);
+    px(g, '#6a645e', 3, 66, 26, 4);
+    for (let r = 0; r < 4; r++) px(g, '#c8b880', 7, 52 + r * 4, 14 + (r % 2) * 4, 1);
+    px(g, '#8a847c', 11, 14, 10, 32);
+    px(g, '#a09a92', 11, 14, 4, 32);
+    blob(g, 16, 10, 5, '#8a847c');
+    blob(g, 15, 9, 4, '#a09a92');
+    px(g, '#7a746c', 9, 4, 14, 3);
+    px(g, '#8a847c', 21, 18, 2, 18);
+    px(g, '#6a645e', 22, 6, 1, 14);
+  });
+}
+
 export function tallSpriteFor(m: ParsedMap, x: number, y: number): TallSprite | null {
   const t = m.tiles[y * m.width + x];
   if (!t?.tall) return null;
+  if (theme !== (m.def.theme ?? m.def.region)) setTheme(m.def.theme ?? m.def.region);
+  if (t.id === 'memorial') return memorialSprite();
   if (t.id === 'tree') return treeSprite(Math.floor(hash01(x, y, 1200) * 3));
   if (t.id === 'lamp') return lampSprite();
   if (t.id === 'pole') return poleSprite();
@@ -564,6 +737,16 @@ const STYLES: Record<string, BuildingStyle> = {
   house: { roof: ['#8c5a3c', '#744830', '#a46c4a'], wall: ['#d6c8aa', '#c2b392'], trim: '#5a3f2a', door: '#5a3f2a', roofKind: 'tile' },
   house2: { roof: ['#6e6a5c', '#5a574a', '#827e6e'], wall: ['#cbb89a', '#b5a282'], trim: '#5a3f2a', door: '#7a5a3e', roofKind: 'slate' },
   tollbooth: { roof: ['#8c5a3c', '#744830', '#a46c4a'], wall: ['#a3825c', '#8a6a48'], trim: '#5a3f2a', door: '#5a3f2a', roofKind: 'tile' },
+  stilt: { roof: ['#9a8a5a', '#7e7048', '#b0a06c'], wall: ['#8a7458', '#74604a'], trim: '#4a3a2c', door: '#5a6a5a', roofKind: 'thatch' },
+  lockup: { roof: ['#5a5a5e', '#48484c', '#6e6e72'], wall: ['#9a968e', '#86827a'], trim: '#3a3a40', door: '#3a3a40', roofKind: 'slate' },
+  hall: { roof: ['#6a4a3a', '#563c2e', '#7e5a48'], wall: ['#9a5a44', '#844c38'], trim: '#e0d0b0', door: '#4a3a5a', roofKind: 'slate' },
+  mine: { roof: ['#5a4a3a', '#46382c', '#6e5c48'], wall: ['#6e6258', '#5a5048'], trim: '#3a2e24', door: '#141210', roofKind: 'tile' },
+  abbey: { roof: ['#5e646a', '#4c5258', '#70767c'], wall: ['#d8d0bc', '#c4bca8'], trim: '#6a6458', door: '#5a3e2a', roofKind: 'slate' },
+  office: { roof: ['#3e3c44', '#2e2c34', '#504e56'], wall: ['#8e8a86', '#7a7672'], trim: '#2a2830', door: '#2a2830', roofKind: 'slate' },
+  warehouse: { roof: ['#3a7a7a', '#2e6464', '#4a8e8e'], wall: ['#d8ccb0', '#c4b89c'], trim: '#2e5a5a', door: '#7a5a3a', roofKind: 'tile' },
+  lighthouse: { roof: ['#b83a32', '#962e28', '#d04a40'], wall: ['#f2eee4', '#dcd6c8'], trim: '#b83a32', door: '#3a5a7a', roofKind: 'tile' },
+  hut: { roof: ['#7a6a48', '#62553a', '#8e7e58'], wall: ['#7a6a52', '#665844'], trim: '#3e3428', door: '#4a3a2c', roofKind: 'thatch' },
+  palace: { roof: ['#4a5a8a', '#3a4874', '#5e6e9e'], wall: ['#e8e2d4', '#d4cebe'], trim: '#c8a040', door: '#6a2a2a', roofKind: 'slate' },
 };
 
 function window4(g: G, x: number, y: number, trim: string): void {
@@ -640,7 +823,7 @@ export function drawBuilding(g: G, b: Building): void {
     }
   }
   // Chimney.
-  if (b.style !== 'tollbooth') {
+  if (!['tollbooth', 'lighthouse', 'mine', 'abbey', 'palace', 'lockup'].includes(b.style)) {
     const chx = x + w - 30;
     px(g, '#7a5a4a', chx, y - 4, 10, 14);
     px(g, '#8c6a58', chx, y - 4, 10, 2);
@@ -676,6 +859,27 @@ export function drawBuilding(g: G, b: Building): void {
       px(g, '#4c6446', i + 4, wy + 2, 4, 6);
     }
   }
+  if (b.style === 'mine' && b.door) {
+    const dx = b.door.x * TILE;
+    px(g, '#5a4632', dx - 4, y + h - 40, 40, 40);
+    px(g, '#141210', dx + 2, y + h - 34, 28, 34);
+    px(g, '#6e5a44', dx - 4, y + h - 40, 40, 5);
+  }
+  if (b.style === 'lockup') {
+    for (let c = 0; c < b.w; c++) {
+      const cx = (b.x + c) * TILE;
+      if (b.door && b.door.x === b.x + c) continue;
+      for (let k = 0; k < 4; k++) px(g, '#2a2a30', cx + 11 + k * 3, wy + Math.max(4, wallH - 34) + 2, 1, 10);
+    }
+  }
+  if (b.style === 'lighthouse') {
+    for (let k = 0; k < 3; k++) px(g, '#b83a32', x + 2, wy + 6 + k * 14, w - 4, 5);
+  }
+  if (b.style === 'hall' && b.door) {
+    const sx = b.door.x * TILE - 24;
+    px(g, '#3a2a20', sx, wy - 6, 80, 10);
+    px(g, '#e0d0b0', sx + 4, wy - 3, 72, 1);
+  }
   if (b.style === 'mayor' && b.door) {
     const dx = b.door.x * TILE;
     px(g, '#e8e0cc', dx - 2, y + h - 34, 4, 34);
@@ -694,6 +898,7 @@ export function paintGround(m: ParsedMap): HTMLCanvasElement {
   const g = canvas.getContext('2d');
   if (!g) return canvas;
   g.imageSmoothingEnabled = false;
+  setTheme(m.def.theme ?? m.def.region);
   const indoor = m.def.kind === 'interior';
   const idAt = (x: number, y: number): string | undefined => {
     if (x < 0 || y < 0 || x >= m.width || y >= m.height) return undefined;
@@ -717,7 +922,7 @@ export function paintGround(m: ParsedMap): HTMLCanvasElement {
         case 'dirt':
           dirt(g, x, y, tx, ty, (dx, dy) => {
             const o = idAt(tx + dx, ty + dy);
-            return o === 'dirt' || o === 'cobble' || o === 'bridge' || o === 'tollgate' || o === undefined;
+            return o === 'dirt' || o === 'cobble' || o === 'bridge' || o === 'tollgate' || o === 'rails' || o === 'boardwalk' || o === undefined;
           });
           break;
         case 'cobble':
@@ -726,7 +931,7 @@ export function paintGround(m: ParsedMap): HTMLCanvasElement {
         case 'water':
           water(g, x, y, tx, ty, (dx, dy) => {
             const o = idAt(tx + dx, ty + dy);
-            return o === 'water' || o === 'bridge' || o === undefined;
+            return o === 'water' || o === 'bridge' || o === 'boardwalk' || o === 'reeds' || o === undefined;
           });
           break;
         case 'bridge':
@@ -783,9 +988,29 @@ export function paintGround(m: ParsedMap): HTMLCanvasElement {
         case 'doormat':
           doormat(g, x, y, tx, ty);
           break;
+        case 'boardwalk':
+          boardwalk(g, x, y, tx, ty);
+          break;
+        case 'reeds': {
+          const wet = ['water', 'boardwalk'].includes(idAt(tx, ty + 1) ?? '') || idAt(tx - 1, ty) === 'water' || idAt(tx + 1, ty) === 'water';
+          reeds(g, x, y, tx, ty, wet);
+          break;
+        }
+        case 'slag':
+          slag(g, x, y, tx, ty);
+          break;
+        case 'rails':
+          rails(g, x, y, tx, ty);
+          break;
+        case 'rocks':
+          rocks(g, x, y, tx, ty);
+          break;
+        case 'grave':
+          grave(g, x, y, tx, ty);
+          break;
         default:
           // Grass under trees, lamps, poles and topiary; they are drawn as sprites.
-          if (id === 'tree' || id === 'lamp' || id === 'pole' || id === 'topiary' || id === 'grass') {
+          if (id === 'tree' || id === 'lamp' || id === 'pole' || id === 'topiary' || id === 'grass' || id === 'memorial') {
             const under = idAt(tx, ty + 1);
             if (id !== 'grass' && (under === 'cobble' || idAt(tx - 1, ty) === 'cobble')) cobble(g, x, y, tx, ty);
             else grass(g, x, y, tx, ty);

@@ -45,8 +45,8 @@ export const THISTLE_ROAD: MapDef = {
   exits: [
     { x: 0, y: 5, to: 'thistle-cross', toX: 37, toY: 12, facing: 'left' },
     { x: 0, y: 6, to: 'thistle-cross', toX: 37, toY: 13, facing: 'left' },
-    { x: 83, y: 4, to: 'thistle-road', toX: 82, toY: 4, facing: 'right', if: { flag: 'travel.thistle' }, blocked: 'road-ahead' },
-    { x: 83, y: 5, to: 'thistle-road', toX: 82, toY: 5, facing: 'right', if: { flag: 'travel.thistle' }, blocked: 'road-ahead' },
+    { x: 83, y: 4, to: 'thistle-road', toX: 82, toY: 4, facing: 'right', if: { flag: 'toll.won' }, blocked: 'road-ahead', travel: 'leave' },
+    { x: 83, y: 5, to: 'thistle-road', toX: 82, toY: 5, facing: 'right', if: { flag: 'toll.won' }, blocked: 'road-ahead', travel: 'leave' },
   ],
   npcs: [
     { id: 'fenn', sprite: 'fenn', x: 70, y: 3, facing: 'down', dialogue: 'fenn-gate', if: { notFlag: 'toll.won' } },

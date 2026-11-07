@@ -55,6 +55,7 @@ export const REGIONS: Record<string, RegionDef> = {
     gain: 1.5,
     groups: [g(3, 'leech'), g(2, 'wisp', 'wisp'), g(2, 'reed', 'reed')],
     events: ['storm', 'peddler'],
+    quieter: { flag: 'fen.punt', mult: 0.75 },
     repelPrice: 35,
     inspectors: 'fen',
   },

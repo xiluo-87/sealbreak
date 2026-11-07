@@ -598,6 +598,26 @@ export const GRANS_LETTER: Omit<LetterDef, 'tone' | 'carry' | 'burst' | 'reward'
   signature: 'Your Tam',
 };
 
+/** Fenn's own letter, from his squad. He won't open it until Copperhill. */
+export const FENNS_LETTER: Omit<LetterDef, 'tone' | 'carry' | 'burst' | 'reward' | 'region'> = {
+  id: 'FENN',
+  title: 'Fenn’s Letter',
+  from: 'Cpl. Hale, Squad Seven',
+  to: 'Pte. F. Harrow',
+  hand: 'real',
+  style: 'pencil',
+  postmark: 'FIELD POST 7',
+  body: [
+    'Fenn,',
+    'Sarge says you went at the river. Good. Somebody had to.',
+    'Dont go thinking we are cross. We drew straws for who had to be cross and nobody won.',
+    'Dunnock says he is minding your boots for you which is a lie he is wearing them.',
+    'If this finds you then you are out of it. Stay out. Have a pint for each of us and dont count.',
+    'We were glad. That is the whole letter really.',
+  ],
+  signature: 'Hale, and the rest of Seven',
+};
+
 export const LETTER_BY_ID: Record<string, LetterDef> = Object.fromEntries(LETTERS.map((l) => [l.id, l]));
 
 /** Each party member carries at most this many letters. */

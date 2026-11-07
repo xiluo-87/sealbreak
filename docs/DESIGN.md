@@ -59,6 +59,7 @@ The game has a seven-day clock. Only travel uses it.
 - The party cannot go back to an earlier region.
 - Reaching Kingsend before day 7 has a small benefit: each spare day removes one Inspector from the fight outside the Dead Letter Office.
 - A clear warning appears before any choice that would make Kingsend unreachable in time. A player can still do this on purpose, which leads to the Dead Letter ending.
+- Each day of travel begins with a night at camp: a conversation by the fire, a chance to sort the satchel, and a rest that restores all HP and half of everyone's FP. The abbey's blessing makes it all FP. Inns restore everything for a price that rises along the road.
 
 ## 5. Letters
 
@@ -107,7 +108,7 @@ Hand: **R** means the letter is real, and **F** means it was forged (see section
 
 | ID | Letter | From → To | Hand | Tone | Carry / Break names | Delivery reward |
 |---|---|---|---|---|---|---|
-| L04 | To My Sister, Who Stayed | Cpl. Ivo Rusk → Bea Rusk, eel-catcher | F | Apology | Clear Water / Forgiven | Bea's punt: Fen road encounters −25% |
+| L04 | To My Sister, Who Stayed | Cpl. Ivo Rusk → Bea Rusk, eel-catcher | F | Apology | Clear Water / Forgiven | Bea's punt: encounters on the Fen's waterside roads −25% (the Abbey path is the one still ahead) |
 | L05 | Recipe, As Promised | Aunt Dorrit → Sal Pottle, innkeeper | R | Joy | Good Cheer / Feast | Eel pie recipe: inn meals give +10% ATK in the next battle |
 | L06 | The Reeds Know | An old partner → Hob Tanner, reed bandit (found in a road encounter) | R | Threat | Rumour / Confession | Hob's gang leaves the road, plus their stash |
 | L07 | All My Love, Always | Lt. Rafe Corran → Elsie Corran | F | Love | Hold Fast / Always (revives one ally at full HP) | Elsie remarried long ago, and keeps it anyway. Ring accessory (+2 WIL) |
@@ -288,6 +289,8 @@ Heat also changes the final act: at Heat 3 or below, Vane fights alone. At Heat 
 Each main stop has a town map and a road map before it. Maps are hand-authored as text grids.
 
 **Road events** (at least 12): stranded traveller, suspicious toll, shortcut offer, wedding party, lost dog, someone asking for their letter early, storm shelter, peddler with rare goods, a child who wants to be a courier, a Wire crew's lunch break, a goat admirer, and an old oak where people nail messages for the dead.
+
+**Towns** each have a shop and an inn. Shops sell the basics at prices that rise by region; the Mayor's word gets a fifth off in Thistle Cross, and the Salt Road's goodwill does the same there. At Copperhill, Old Brass blocks the east road until it is beaten, and the Miners' Token opens the Old Mine's upper workings, where a few wartime stores are still waiting.
 
 **Items and gear** stay small: Loaf and Pie (heal HP), Ink (restore FP), Smelling Salts (revive), Repel Bell, Apple (for Biscuit), and one accessory slot per character. Coin buys these from shops. There are no weapons or armour to manage, because the letters are the build.
 

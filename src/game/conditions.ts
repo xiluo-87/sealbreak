@@ -35,19 +35,22 @@ export type Effect =
   /** Restores this fraction of everyone's max HP (and FP, if given). */
   | { heal: number; fp?: number }
   | { heat: number }
-  /** Starts a battle once the conversation ends. `random` picks one for the road. */
-  | { fight: string }
+  /** Starts a battle once the conversation ends (`random` picks one for the road), then `after` if it is won. */
+  | { fight: string; after?: string }
   /** Brings a member up to the party's level without joining (before a guest fight). */
-  | { ready: PartyId };
+  | { ready: PartyId }
+  /** Opens a shop or an inn once the conversation ends. */
+  | { open: 'shop' | 'inn' | 'travel'; id: string };
 
 /** Things that happened while applying effects, for the interface to report. */
 export interface Outbox {
   deliveries: (DeliveryResult & { letter: string })[];
-  fights: string[];
+  fights: { id: string; after?: string }[];
+  opens: { open: 'shop' | 'inn' | 'travel'; id: string }[];
 }
 
 export function emptyOutbox(): Outbox {
-  return { deliveries: [], fights: [] };
+  return { deliveries: [], fights: [], opens: [] };
 }
 
 export function check(c: Condition | undefined, s: GameState): boolean {
@@ -115,11 +118,15 @@ export function apply(e: Effect, s: GameState, out?: Outbox): void {
     return;
   }
   if ('fight' in e) {
-    out?.fights.push(e.fight);
+    out?.fights.push(e.after ? { id: e.fight, after: e.after } : { id: e.fight });
     return;
   }
   if ('ready' in e) {
     catchUp(s, e.ready);
+    return;
+  }
+  if ('open' in e) {
+    out?.opens.push({ open: e.open, id: e.id });
     return;
   }
   if ('set' in e) s.flags[e.set] = e.to ?? true;

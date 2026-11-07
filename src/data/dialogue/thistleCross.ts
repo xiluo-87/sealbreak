@@ -295,8 +295,20 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
           say('gil', 'Odile drinks here Fridays. Half of stout and the crossword, and nobody talks to her till it’s done.'),
         ],
       },
-      after: { lines: [say('gil', 'Leaving with Odile? Then I suppose the crossword’s mine now. Seven across has been empty since Tuesday.')] },
-      free: { lines: [say('gil', 'Mother Finch says you’re her guests. Then you’re mine as well. There’s always a bed here for you.')] },
+      after: {
+        lines: [say('gil', 'Leaving with Odile? Then I suppose the crossword’s mine now. Seven across has been empty since Tuesday.')],
+        choices: [
+          { text: 'Take a room', then: [{ open: 'inn', id: 'thistle' }] },
+          { text: 'Not now' },
+        ],
+      },
+      free: {
+        lines: [say('gil', 'Mother Finch says you’re her guests. Then you’re mine as well. There’s always a bed here for you.')],
+        choices: [
+          { text: 'Take a room', then: [{ open: 'inn', id: 'thistle' }] },
+          { text: 'Not now' },
+        ],
+      },
     },
   },
   {
@@ -311,10 +323,20 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
       after: {
         lines: [
           say('dray', 'Off on the road? Mind the geese. They’ve no respect for the uniform.'),
-          say('dray', 'Come back when I’ve finished the string and I’ll sell you a Repel Bell.'),
+          say('dray', 'I’ve given up on the string. What can I get you?'),
+        ],
+        choices: [
+          { text: 'Buy something', then: [{ open: 'shop', id: 'thistle' }] },
+          { text: 'Not now' },
         ],
       },
-      discount: { lines: [say('dray', 'My cousin the Mayor says I’m to look after you. When I open, you’ll pay what I pay. Don’t tell anyone.')] },
+      discount: {
+        lines: [say('dray', 'My cousin the Mayor says I’m to look after you. You’ll pay what I pay. Don’t tell anyone.')],
+        choices: [
+          { text: 'Buy something', then: [{ open: 'shop', id: 'thistle' }] },
+          { text: 'Not now' },
+        ],
+      },
     },
   },
   beforeAfter(

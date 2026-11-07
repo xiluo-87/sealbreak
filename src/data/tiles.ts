@@ -28,6 +28,13 @@ export const TILES: Record<string, TileDef> = {
   n: { id: 'noticeboard', solid: true },
   p: { id: 'pole', solid: true, tall: true },
   g: { id: 'tollgate', solid: true },
+  '#': { id: 'boardwalk', solid: false },
+  ':': { id: 'reeds', solid: true },
+  '%': { id: 'slag', solid: true },
+  j: { id: 'rails', solid: false },
+  '^': { id: 'rocks', solid: true },
+  '!': { id: 'memorial', solid: true, tall: true },
+  '+': { id: 'grave', solid: true },
   // Interiors.
   W: { id: 'wall', solid: true },
   w: { id: 'wallside', solid: true },
@@ -52,6 +59,16 @@ export const BUILDINGS: Record<string, { id: string; name: string }> = {
   R: { id: 'house', name: 'House' },
   Q: { id: 'house2', name: 'House' },
   B: { id: 'tollbooth', name: 'Toll booth' },
+  L: { id: 'lockup', name: 'Lock-up' },
+  U: { id: 'hall', name: 'Union Hall' },
+  E: { id: 'mine', name: 'The Old Mine' },
+  A: { id: 'stilt', name: 'House' },
+  C: { id: 'abbey', name: 'Mirrow Abbey' },
+  G: { id: 'office', name: 'Office' },
+  J: { id: 'warehouse', name: 'Warehouse' },
+  N: { id: 'lighthouse', name: 'Lighthouse' },
+  O: { id: 'hut', name: 'Hut' },
+  V: { id: 'palace', name: 'Palace' },
 };
 
 export const DOOR = 'D';

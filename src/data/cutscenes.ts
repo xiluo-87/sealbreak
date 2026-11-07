@@ -45,6 +45,10 @@ export const CUTSCENES: Record<string, Cutscene> = Object.fromEntries(
           { fade: 'in' },
         ],
       },
+      { id: 'fen-arrive', steps: [{ wait: 300 }, { say: 'fen-arrive-1' }] },
+      { id: 'cop-arrive', steps: [{ wait: 300 }, { say: 'cop-arrive-1' }] },
+      { id: 'brass', steps: [{ say: 'brass-1' }, { battle: 'brass' }, { say: 'brass-2' }] },
+      { id: 'memorial-fenn', steps: [{ say: 'memorial-fenn' }, { read: 'FENN' }, { say: 'memorial-fenn-2' }] },
     ] satisfies Cutscene[]
   ).map((c) => [c.id, c]),
 );

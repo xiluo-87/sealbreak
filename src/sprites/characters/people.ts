@@ -2,6 +2,8 @@
  * Battle sprites for Fenn and every human foe, built with the humanoid kit.
  * Party members and bosses are 64x96; regular human enemies are 72x72.
  */
+import { type PortraitSpec, portraitSets } from './portraitGen';
+import type { CharacterSprites } from '../types';
 import { type HumanSpec, humanSprites } from './humanKit';
 
 export const FENN_SPEC: HumanSpec = {
@@ -296,3 +298,52 @@ const SPECS: HumanSpec[] = [
 
 export const PEOPLE_SPRITES = SPECS.map(humanSprites);
 export const FENN_BATTLE = PEOPLE_SPRITES[0];
+
+
+const PORTRAITS: PortraitSpec[] = [
+  {
+    id: 'grist',
+    skin: ['#f4cab0', '#e0a88c', '#bc8468', '#8e5e48'],
+    hair: '#5a4a40',
+    eye: '#5a5a6a',
+    lips: ['#d08a7a', '#b0685e', '#8a4e48', '#623632'],
+    coat: '#2a2630',
+    under: '#e8e0d0',
+    accent: '#8a2a2a',
+    hairStyle: 'short',
+    hat: { style: 'tophat', colour: '#1e1c22' },
+    jaw: 'soft',
+    extras: ['moustache', 'chain', 'collar'],
+  },
+  {
+    id: 'sorrel',
+    skin: ['#fbdcc6', '#ecbca0', '#c89678', '#9a6c54'],
+    hair: '#a4502e',
+    eye: '#5a7a4a',
+    lips: ['#e09484', '#c07068', '#9a5050', '#6e3636'],
+    coat: '#24222a',
+    under: '#e8e4dc',
+    accent: '#a4502e',
+    hairStyle: 'messy',
+    hat: { style: 'cap', colour: '#24222a' },
+    jaw: 'narrow',
+    extras: ['badge', 'collar', 'freckles'],
+  },
+  {
+    id: 'vane',
+    skin: ['#fbe6d8', '#ecccb8', '#c8a690', '#9a7a66'],
+    hair: '#e8dcb8',
+    eye: '#5a6a8a',
+    lips: ['#d89c90', '#b87c74', '#946058', '#6a423e'],
+    coat: '#18161c',
+    under: '#c8c8d0',
+    accent: '#d8c070',
+    metal: 'silver',
+    hairStyle: 'pinned',
+    jaw: 'narrow',
+    extras: ['epaulettes', 'badge', 'collar'],
+  },
+];
+
+/** Portraits for the cast's key antagonists, as their own sets. */
+export const PORTRAIT_SPRITES: CharacterSprites[] = PORTRAITS.map((p) => ({ id: `${p.id}-face`, name: `${p.id} portrait`, sets: () => portraitSets(p) }));

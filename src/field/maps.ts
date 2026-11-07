@@ -19,6 +19,8 @@ export interface ExitDef {
   /** If set and false, the exit is closed and `blocked` dialogue plays instead. */
   if?: Condition;
   blocked?: string;
+  /** Instead of warping, open the road choices (`leave`) or head back from a detour (`return`). */
+  travel?: 'leave' | 'return';
 }
 
 export interface NpcDef {
@@ -51,6 +53,10 @@ export interface MapDef {
   name: string;
   kind: MapKind;
   region: string;
+  /** Colour theme for the art, if not the region's. */
+  theme?: string;
+  /** Building styles and names for this map, by footprint letter. */
+  buildings?: Record<string, { id: string; name: string }>;
   grid: string[];
   exits: ExitDef[];
   npcs: NpcDef[];
@@ -92,7 +98,7 @@ export function parseMap(def: MapDef): ParsedMap {
     if (row.length !== width) throw new Error(`map ${def.id}: row ${y} is ${row.length} wide, expected ${width}`);
     for (let x = 0; x < width; x++) {
       const ch = row[x] ?? '.';
-      if (BUILDINGS[ch]) {
+      if (def.buildings?.[ch] ?? BUILDINGS[ch]) {
         const list = letters.get(ch) ?? [];
         list.push([x, y]);
         letters.set(ch, list);
@@ -117,7 +123,7 @@ export function parseMap(def: MapDef): ParsedMap {
     const x1 = Math.max(...xs);
     const y1 = Math.max(...ys);
     const door = doors.find(([dx, dy]) => dx >= x0 && dx <= x1 && dy >= y0 && dy <= y1) ?? null;
-    const info = BUILDINGS[letter] ?? { id: 'house', name: 'House' };
+    const info = def.buildings?.[letter] ?? BUILDINGS[letter] ?? { id: 'house', name: 'House' };
     const idx = buildings.length;
     buildings.push({ letter, style: info.id, name: info.name, x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, door: door ? { x: door[0], y: door[1] } : null });
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) buildingAt[y * width + x] = idx;

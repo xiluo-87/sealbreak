@@ -5,10 +5,11 @@ import { JUNIPER } from './characters/juniper/index';
 import { ODILE } from './characters/odile/index';
 import { SACK } from './characters/props';
 import { ROOKIE } from './characters/rookie/index';
+import { JOURNEY_FOLK_SPRITES } from './characters/journeyFolk';
 import { THISTLE_FOLK_SPRITES } from './characters/thistleFolk';
 import type { CharacterSprites, Facing, SpriteSetDef } from './types';
 
-export const FIELD_CHARACTERS: CharacterSprites[] = [ROOKIE, ODILE, FENN, JUNIPER, BISCUIT, SACK, ...THISTLE_FOLK_SPRITES];
+export const FIELD_CHARACTERS: CharacterSprites[] = [ROOKIE, ODILE, FENN, JUNIPER, BISCUIT, SACK, ...THISTLE_FOLK_SPRITES, ...JOURNEY_FOLK_SPRITES];
 
 const byId = new Map(FIELD_CHARACTERS.map((c) => [c.id, c]));
 

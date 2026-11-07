@@ -64,7 +64,7 @@ export const ROAD_DIALOGUE: Dialogue[] = [
           say('odile', 'There’s a letter in your coat, Fenn. Addressed in your own hand.', 'neutral'),
           say('fenn', 'It’ll keep.', 'sad'),
         ],
-        then: [{ join: 'fenn' }, { set: 'toll.won' }, { set: 'travel.thistle' }],
+        then: [{ join: 'fenn' }, { set: 'toll.won' }],
       },
     },
   },

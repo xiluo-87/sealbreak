@@ -3,7 +3,7 @@
  * breaking a seal at camp, resealing, and the Inspectorate's interest.
  */
 import { letterSkill } from '../battle/letterSkills';
-import { GRANS_LETTER, LETTERS, type LetterDef } from '../data/letters';
+import { FENNS_LETTER, GRANS_LETTER, LETTERS, type LetterDef } from '../data/letters';
 import { MEMBERS } from '../data/party';
 import type { GameState, PartyId } from '../game/state';
 import { hint, touchMode } from '../input/hints';
@@ -51,15 +51,16 @@ export class Satchel {
     this.render();
   }
 
-  /** Gran's Letter first, then letters carried, then the sack, then delivered. */
+  /** Gran's Letter first (and Fenn's, once he joins), then letters carried, then the sack, then delivered. */
   private rows(): (LetterDef | typeof GRANS_LETTER)[] {
-    if (!sackFound(this.game)) return [GRANS_LETTER];
+    const keys: (typeof GRANS_LETTER)[] = [GRANS_LETTER, ...(this.game.party.includes('fenn') ? [FENNS_LETTER] : [])];
+    if (!sackFound(this.game)) return keys;
     const rank = (l: LetterDef): number => {
       const p = this.game.letters[l.id];
       if (p?.state === 'delivered') return 3;
       return p?.holder ? 1 : 2;
     };
-    return [GRANS_LETTER, ...[...LETTERS].sort((a, b) => rank(a) - rank(b))];
+    return [...keys, ...[...LETTERS].sort((a, b) => rank(a) - rank(b))];
   }
 
   private holderName(id: PartyId | null): string {
@@ -77,6 +78,7 @@ export class Satchel {
     this.listEl.innerHTML = rows
       .map((l, i) => {
         if (l.id === 'GRAN') return `<li data-i="${i}" class="${i === this.selected ? 'selected' : ''}"><b>${esc(l.title)}</b><small>Kept in your tin</small></li>`;
+        if (l.id === 'FENN') return `<li data-i="${i}" class="${i === this.selected ? 'selected' : ''}"><b>${esc(l.title)}</b><small>${this.game.flags['fenn.letterRead'] ? 'Opened at last' : 'In Fenn’s coat, unopened'}</small></li>`;
         const def = l as LetterDef;
         const p = this.game.letters[def.id];
         return `<li data-i="${i}" class="${i === this.selected ? 'selected' : ''} st-${p?.state ?? 'sealed'}"><b>${esc(def.title)}</b><small>${esc(this.holderName(p?.holder ?? null))} · ${STATE_LABEL[p?.state ?? 'sealed']}</small><span class="tone tone-${def.tone}">${def.tone}</span></li>`;
@@ -97,6 +99,11 @@ export class Satchel {
     if (!l) return;
     if (l.id === 'GRAN') {
       this.detailEl.innerHTML = `<h3>${esc(l.title)}</h3><p class="addr">From ${esc(l.from)} to ${esc(l.to)}</p><p>The one letter your gran kept. You have read it more times than you can count.</p>`;
+      return;
+    }
+    if (l.id === 'FENN') {
+      const read = !!this.game.flags['fenn.letterRead'];
+      this.detailEl.innerHTML = `<h3>${esc(l.title)}</h3><p class="addr">To ${esc(l.to)}</p><p>${read ? 'Fenn read it at the memorial in Copperhill. He lets you read it too.' : 'Addressed to Fenn in a hand that isn’t his. He says it’ll keep.'}</p>`;
       return;
     }
     const def = l as LetterDef;
@@ -134,6 +141,11 @@ export class Satchel {
     this.closeMenu();
     if (l.id === 'GRAN') {
       this.read(l);
+      return;
+    }
+    if (l.id === 'FENN') {
+      if (this.game.flags['fenn.letterRead']) this.reader.show(l, 'broken');
+      else this.toast('Fenn shakes his head. Not yet.');
       return;
     }
     const def = l as LetterDef;
