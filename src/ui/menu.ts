@@ -39,6 +39,13 @@ export class ListMenu {
     this.onHighlight?.(this.selected);
   }
 
+  /** Highlight an item, for menus rebuilt in place (the options menu). */
+  select(index: number): void {
+    if (index < 0 || index >= this.items.length || this.items[index]?.disabled) return;
+    this.selected = index;
+    this.render();
+  }
+
   private render(): void {
     this.list.replaceChildren();
     this.items.forEach((item, i) => {

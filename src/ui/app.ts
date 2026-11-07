@@ -3,6 +3,8 @@
  * the field, the pause menu and save slots.
  */
 import { songFor, sound } from '../audio';
+import { saveSettings, settings } from '../game/settings';
+import { applySettings } from './options';
 import { BattleScene } from '../battle/battleScene';
 import { getEncounter } from '../data/enemies';
 import { ITEMS } from '../data/items';
@@ -238,6 +240,8 @@ export class App {
     }
     items.push({ label: 'New game', action: () => this.showNaming() });
     items.push({ label: 'Load game', disabled: !latest, action: () => this.showLoad(() => this.showTitle()) });
+    items.push({ label: 'Options', action: () => this.showOptions(() => this.showTitle()) });
+    items.push({ label: 'Credits', action: () => this.showCredits(() => this.showTitle()) });
     this.menu = new ListMenu(this.ui, '', items, undefined, 'menu title-menu');
   }
 
@@ -501,8 +505,55 @@ export class App {
     this.ending = new EndingScreen(this.ui, endingPages(state, id), this.reader, () => {
       this.ending?.destroy();
       this.ending = null;
-      this.showTitle();
+      this.showCredits(() => this.showTitle());
     });
+  }
+
+  /** Text speed, motion, text size, encounter rate and sound (design 15). They apply at once and are kept. */
+  private showOptions(back: () => void, at = 0): void {
+    this.clearUi();
+    const s = settings;
+    const change = (index: number, fn: () => void) => (): void => {
+      fn();
+      saveSettings(this.storage);
+      applySettings();
+      this.showOptions(back, index);
+    };
+    const onOff = (v: boolean): string => (v ? 'On' : 'Off');
+    const speeds = ['slow', 'normal', 'fast'] as const;
+    const items: MenuItem[] = [
+      { label: `Text speed: ${s.textSpeed}`, detail: 'How fast dialogue types out', action: change(0, () => (s.textSpeed = speeds[(speeds.indexOf(s.textSpeed) + 1) % 3] ?? 'normal')) },
+      { label: `Reduced motion: ${onOff(s.reducedMotion)}`, detail: 'Less shaking, swinging and lunging', action: change(1, () => (s.reducedMotion = !s.reducedMotion)) },
+      { label: `Larger text: ${onOff(s.largeText)}`, detail: 'Bigger menus, dialogue and letters', action: change(2, () => (s.largeText = !s.largeText)) },
+      { label: `Encounters: ${s.lowEncounters ? 'low' : 'normal'}`, detail: 'How often trouble finds you on the road', action: change(3, () => (s.lowEncounters = !s.lowEncounters)) },
+      { label: `Sound: ${onOff(!s.muted)}`, detail: 'Music and effects', action: change(4, () => (s.muted = !s.muted)) },
+      {
+        label: `Volume: ${Math.round(s.volume * 100)}%`,
+        detail: 'Steps of 20%',
+        disabled: s.muted,
+        action: change(5, () => (s.volume = [0.2, 0.4, 0.6, 0.8, 1].find((v) => v > s.volume + 0.01) ?? 0.2)),
+      },
+      { label: 'Back', action: back },
+    ];
+    this.menu = new ListMenu(this.ui, 'Options', items, back, 'menu options-menu');
+    this.menu.select(at);
+  }
+
+  private showCredits(back: () => void): void {
+    this.clearUi();
+    const found = endingsFound(this.storage).length;
+    this.menu = new ListMenu(
+      this.ui,
+      'Sealbreak',
+      [
+        { label: 'Story, code, art and music', detail: 'Every sprite, tile, tune and sound is drawn or played by code. There are no image or audio files.', action: back },
+        { label: 'Built with', detail: 'TypeScript, Vite, Canvas 2D and Web Audio', action: back },
+        { label: `Endings found: ${found} of 4`, detail: 'Each one depends on how you carried the post', action: back },
+        { label: 'Thank you for carrying the post', action: back },
+      ],
+      back,
+      'menu credits-menu',
+    );
   }
 
   private showPause(): void {
@@ -519,6 +570,7 @@ export class App {
         { label: 'Party', detail: this.partySummary(field.state), action: () => this.showParty(field.state) },
         { label: 'Save game', action: () => this.showSave(field.state) },
         { label: 'Load game', action: () => this.showLoad(() => this.showPause()) },
+        { label: 'Options', action: () => this.showOptions(() => this.showPause()) },
         { label: 'Title screen', action: () => this.showTitle() },
       ],
       close,

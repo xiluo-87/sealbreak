@@ -1,5 +1,6 @@
 import { audio, unlockOnGesture } from './audio';
-import { loadSettings, settings } from './game/settings';
+import { loadSettings } from './game/settings';
+import { applySettings } from './ui/options';
 import { FixedStepClock } from './game/clock';
 import { parseDebugOptions } from './game/debugOptions';
 import { startLoop } from './game/loop';
@@ -26,7 +27,7 @@ function startGame(root: HTMLElement): void {
   const input = new Keyboard();
   input.attach(window);
   loadSettings(safeStorage());
-  audio.setVolume(settings.volume, settings.muted);
+  applySettings();
   unlockOnGesture(window);
   const touch = new TouchControls(root, input);
   const rng = new Rng(options.seed);

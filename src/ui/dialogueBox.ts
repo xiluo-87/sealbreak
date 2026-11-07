@@ -2,6 +2,7 @@
  * The dialogue box: HTML over the canvas so text stays sharp. Shows a name
  * plate, a portrait (talking while text types out) and choices.
  */
+import { settings } from '../game/settings';
 import { sound } from '../audio';
 import type { DialogueView } from '../game/dialogue';
 import { ALL_CHARACTERS } from '../sprites/characters';
@@ -13,7 +14,8 @@ export interface SpeakerInfo {
   portrait?: string;
 }
 
-const CHARS_PER_SECOND = 42;
+/** Typing speed for each text speed option. */
+const CHARS_PER_SECOND = { slow: 24, normal: 42, fast: 90 } as const;
 
 function portraitSheet(id: string): SpriteSheet | null {
   for (const c of ALL_CHARACTERS) {
@@ -146,7 +148,7 @@ export class DialogueBox {
     this.clock += dtMs;
     if (this.typing) {
       this.typingMs += dtMs;
-      const n = Math.min(this.full.length, Math.floor((this.typingMs / 1000) * CHARS_PER_SECOND));
+      const n = Math.min(this.full.length, Math.floor((this.typingMs / 1000) * CHARS_PER_SECOND[settings.textSpeed]));
       if (n !== this.shown) {
         this.shown = n;
         this.textEl.textContent = this.full.slice(0, n);

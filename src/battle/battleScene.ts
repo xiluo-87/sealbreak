@@ -3,6 +3,7 @@
  * forecast on the canvas; menus, the party panel and messages are HTML over
  * it. All rules live in Battle; this only chooses actions and plays events.
  */
+import { settings } from '../game/settings';
 import { sound } from '../audio';
 import { hint } from '../input/hints';
 import { BALANCE } from '../data/balance';
@@ -673,8 +674,8 @@ export class BattleScene implements Scene {
       if (v.alpha <= 0) continue;
       const c = v.key === 'biscuit' ? null : this.battle.get(v.key);
       const dir = c?.side === 'enemy' ? 1 : -1;
-      const lunge = Math.sin(Math.min(1, v.lunge) * Math.PI) * 22 * dir;
-      const shake = v.flash > 0 ? Math.round(Math.sin(this.time / 20) * 2) : 0;
+      const lunge = Math.sin(Math.min(1, v.lunge) * Math.PI) * (settings.reducedMotion ? 8 : 22) * dir;
+      const shake = v.flash > 0 && !settings.reducedMotion ? Math.round(Math.sin(this.time / 20) * 2) : 0;
       g.fillStyle = 'rgba(20, 24, 14, 0.25)';
       g.beginPath();
       g.ellipse(v.x + lunge, v.y + 1, c?.side === 'enemy' ? 16 : 14, 4, 0, 0, Math.PI * 2);

@@ -1230,3 +1230,16 @@ body.touch .battle-menu {
   font-size: calc(var(--tu) * 9);
   opacity: 0.75;
 }
+
+body.reduced-motion *,
+body.reduced-motion *::before,
+body.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.credits-menu li small,
+.options-menu li small {
+  white-space: normal;
+}
