@@ -73,7 +73,13 @@ describe('sprite rigs', () => {
     });
 
     it(`${set.id}: frames have the documented size and stay on the palette`, () => {
-      const size = SPRITE_SIZES[set.kind];
+      const size = set.kind === 'enemy' ? { width: set.rig.width, height: set.rig.height } : SPRITE_SIZES[set.kind];
+      if (set.kind === 'enemy') {
+        for (const d of [set.rig.width, set.rig.height]) {
+          expect(d).toBeGreaterThanOrEqual(48);
+          expect(d).toBeLessThanOrEqual(72);
+        }
+      }
       const palette = new Set(paletteColours(Object.values(set.rig.materials)));
       for (const list of built.get(set.id)?.anims.values() ?? []) {
         for (const f of list) {
@@ -120,7 +126,7 @@ describe('sprite rigs', () => {
 
   it('animations actually move', () => {
     for (const set of sets.filter((s) => s.character !== 'sack')) {
-      for (const a of set.anims) {
+      for (const a of set.anims.filter((x) => x.frames.length > 1)) {
         const list = built.get(set.id)?.anims.get(a.name) ?? [];
         const distinct = new Set(list.map((f) => Array.from(f.rgba).join(',')));
         expect(distinct.size, `${set.id} ${a.name}`).toBeGreaterThan(1);
@@ -131,13 +137,26 @@ describe('sprite rigs', () => {
 
 describe('field sprites for everyone', () => {
   it('has four directions with idle 2 and walk 6', () => {
-    for (const ch of ALL_CHARACTERS) {
+    for (const ch of ALL_CHARACTERS.filter((c) => c.sets().some((s) => s.kind === 'field'))) {
       for (const view of ['down', 'up', 'left', 'right'] as const) {
         const set = sets.find((s) => s.character === ch.id && s.kind === 'field' && s.view === view);
         expect(set, `${ch.id} ${view}`).toBeDefined();
         expect(set?.anims.find((a) => a.name === 'idle')?.frames, `${ch.id} idle`).toHaveLength(2);
         if (ch.id !== 'sack') expect(set?.anims.find((a) => a.name === 'walk')?.frames, `${ch.id} walk`).toHaveLength(6);
       }
+    }
+  });
+});
+
+describe('enemy sprites', () => {
+  it('have idle, attack, hit and defeat frames in the design’s ranges', () => {
+    for (const set of sets.filter((s) => s.kind === 'enemy')) {
+      const n = (name: string): number => set.anims.find((a) => a.name === name)?.frames.length ?? 0;
+      expect(n('idle'), set.id).toBeGreaterThanOrEqual(2);
+      expect(n('idle'), set.id).toBeLessThanOrEqual(4);
+      expect(n('attack'), set.id).toBe(3);
+      expect(n('hit'), set.id).toBe(1);
+      expect(n('defeat'), set.id).toBe(2);
     }
   });
 });

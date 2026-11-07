@@ -203,6 +203,50 @@ function walk(view: Facing): Pose[] {
   });
 }
 
+/** Biscuit in battle: the side view, scaled up, beside the party and facing the enemy. */
+function battleRig(): Rig {
+  const r = biscuitRig('left');
+  const root = r.bones.find((b) => b.name === 'root');
+  if (root) {
+    root.x = 36;
+    root.y = 92;
+  }
+  return { ...r, id: 'biscuit-battle', width: 64, height: 96, mirror: false };
+}
+
+function big(p: Pose): Pose {
+  return { ...p, bones: { ...p.bones, root: { sx: 1.8, sy: 1.8, ...(p.bones?.root ?? {}) } } };
+}
+
+function battleAnims(): SpriteSetDef['anims'] {
+  const w = walk('left');
+  const P = (xs: Pose[]): Pose[] => xs.map(big);
+  return [
+    anim('idle', P([{ bones: { jaw: { x: 0.4 } } }, { bones: { jaw: { x: -0.4, y: 0.5 } } }, { bones: { jaw: { x: 0.4 }, head: { rot: 2 } } }, { bones: { jaw: { x: -0.4, y: 0.5 }, tail: { rot: 10 } } }]), 220),
+    anim(
+      'attack',
+      P([
+        { bones: { head: { rot: -10, y: 1 }, body: { x: 2 } } },
+        { bones: { head: { rot: 18, y: 2 }, body: { x: 3, rot: 4 } } },
+        { bones: { head: { rot: 22, y: 2 }, body: { x: -6, rot: 6 }, legFN: { x: -3 }, legBN: { x: -2 } } },
+        { bones: { head: { rot: 8 }, body: { x: -9, rot: 2 }, legFN: { x: -4 } } },
+        { bones: { head: { rot: -4 }, body: { x: -2 } } },
+      ]),
+      [140, 120, 80, 160, 160],
+      false,
+    ),
+    anim('eat', P([{ bones: { head: { rot: 14, y: 2 } } }, { bones: { head: { rot: 14, y: 2 }, jaw: { x: 0.6, y: 0.6 } } }, { bones: { head: { rot: 10, y: 1 }, jaw: { x: -0.6 } } }]), 180, false),
+    anim('wander', P(w), 120),
+    anim('victory', P([{ bones: { body: { y: -3 }, legFN: { y: -3 }, legFF: { y: -3 }, head: { rot: -10 } } }, { bones: { body: { y: -1 } } }, {}, { bones: { tail: { rot: 20 }, head: { rot: -6 } } }]), [140, 140, 200, 300]),
+  ];
+}
+
+export const BISCUIT_BATTLE: CharacterSprites = {
+  id: 'biscuit-battle',
+  name: 'Biscuit in battle',
+  sets: () => [{ id: 'biscuit-battle', character: 'biscuit', kind: 'battle', rig: battleRig(), anims: battleAnims() }],
+};
+
 export const BISCUIT: CharacterSprites = {
   id: 'biscuit',
   name: 'Biscuit',
