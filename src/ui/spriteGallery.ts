@@ -3,7 +3,7 @@
  * and dark backgrounds, frame strips, and the field-size silhouette test.
  */
 import { frameAt } from '../sprites/anim';
-import { ALL_CHARACTERS } from '../sprites/characters';
+import { ALL_CHARACTERS, PARTY_CHARACTERS } from '../sprites/characters';
 import { drawFrame, getSheet, type SpriteSheet } from '../sprites/sheet';
 import type { AnimDef, SpriteSetDef } from '../sprites/types';
 
@@ -82,7 +82,7 @@ export function startSpriteGallery(root: HTMLElement): void {
   for (const scale of [1, 4]) {
     const row = el('div', 'sil-row');
     for (const view of ['down', 'left', 'right', 'up'] as const) {
-      for (const ch of ALL_CHARACTERS) {
+      for (const ch of PARTY_CHARACTERS) {
         const set = ch.sets().find((s) => s.kind === 'field' && s.view === view);
         if (!set) continue;
         const sheet = getSheet(set);

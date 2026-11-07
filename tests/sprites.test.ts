@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildSet } from '../src/sprites/build';
-import { ALL_CHARACTERS } from '../src/sprites/characters';
+import { ALL_CHARACTERS, PARTY_CHARACTERS } from '../src/sprites/characters';
 import { EXPRESSIONS } from '../src/sprites/characters/portraitKit';
 import { paletteColours } from '../src/sprites/palette';
 import { type Frame, renderFrame, silhouette } from '../src/sprites/pipeline';
@@ -28,8 +28,8 @@ function frames(id: string, anim: string): Frame[] {
   return f;
 }
 
-describe('character sprite sets', () => {
-  for (const ch of ALL_CHARACTERS) {
+describe('party sprite sets', () => {
+  for (const ch of PARTY_CHARACTERS) {
     describe(ch.name, () => {
       const mine = sets.filter((s) => s.character === ch.id);
 
@@ -119,7 +119,7 @@ describe('sprite rigs', () => {
   });
 
   it('animations actually move', () => {
-    for (const set of sets) {
+    for (const set of sets.filter((s) => s.character !== 'sack')) {
       for (const a of set.anims) {
         const list = built.get(set.id)?.anims.get(a.name) ?? [];
         const distinct = new Set(list.map((f) => Array.from(f.rgba).join(',')));
@@ -129,9 +129,22 @@ describe('sprite rigs', () => {
   });
 });
 
+describe('field sprites for everyone', () => {
+  it('has four directions with idle 2 and walk 6', () => {
+    for (const ch of ALL_CHARACTERS) {
+      for (const view of ['down', 'up', 'left', 'right'] as const) {
+        const set = sets.find((s) => s.character === ch.id && s.kind === 'field' && s.view === view);
+        expect(set, `${ch.id} ${view}`).toBeDefined();
+        expect(set?.anims.find((a) => a.name === 'idle')?.frames, `${ch.id} idle`).toHaveLength(2);
+        if (ch.id !== 'sack') expect(set?.anims.find((a) => a.name === 'walk')?.frames, `${ch.id} walk`).toHaveLength(6);
+      }
+    }
+  });
+});
+
 describe('silhouette test (design 13.4)', () => {
   it('tells every party member apart in solid black at field size', () => {
-    const ids = ALL_CHARACTERS.map((c) => c.id);
+    const ids = PARTY_CHARACTERS.map((c) => c.id);
     for (const view of ['down', 'left', 'up'] as const) {
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
