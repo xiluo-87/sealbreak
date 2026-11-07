@@ -4,7 +4,7 @@
  * plus WIL x scale.
  */
 export type Weight = 'light' | 'normal' | 'heavy';
-export type TargetKind = 'enemy' | 'ally' | 'self' | 'allEnemies' | 'allAllies';
+export type TargetKind = 'enemy' | 'ally' | 'anyAlly' | 'self' | 'allEnemies' | 'allAllies';
 
 export interface SkillDef {
   id: string;
@@ -30,6 +30,24 @@ export interface SkillDef {
   /** Copies the target's last buff onto the user (False Signature). */
   copyBuff?: boolean;
   threat?: boolean;
+  /** Letter effects (design 5.3). */
+  atkBuff?: { mult: number; turns: number };
+  defBuff?: { mult: number; turns: number };
+  defDown?: { mult: number; turns: number };
+  cleanse?: boolean;
+  regen?: { amount: number; turns: number };
+  dot?: { amount: number; turns: number };
+  toFront?: boolean;
+  allNext?: boolean;
+  reviveFull?: boolean;
+  coin?: number;
+  partyFp?: number;
+  skipTurns?: number;
+  ceasefire?: boolean;
+  /** Damage as a fraction of the target's max HP. */
+  maxHpFraction?: number;
+  /** Not usable: works just by being carried. */
+  passive?: boolean;
 }
 
 export const SKILLS: Record<string, SkillDef> = {

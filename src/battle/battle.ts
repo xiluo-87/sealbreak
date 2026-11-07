@@ -6,11 +6,13 @@
 import { BALANCE } from '../data/balance';
 import { ENCOUNTERS, ENEMIES, type EncounterDef, type EnemyMove } from '../data/enemies';
 import { ITEMS } from '../data/items';
-import { MEMBERS, statsAt } from '../data/party';
+import { MEMBERS, statsAt, statsWith } from '../data/party';
 import { SKILLS, type SkillDef, type Weight } from '../data/skills';
 import { type Weather, WEATHER_MIX } from '../data/weather';
 import { Rng } from '../game/rng';
 import type { GameState, PartyId } from '../game/state';
+import { breakSeal, carriedBy, gearBonus } from '../letters/letters';
+import { type LetterMode, letterSkill } from './letterSkills';
 
 export type Side = 'party' | 'enemy';
 export type Ailment = 'slow' | 'weak' | 'fear';
@@ -39,6 +41,12 @@ export interface Combatant {
   ko: boolean;
   held?: string;
   skills: string[];
+  /** Sealed letters this member carries into the fight. */
+  letters: string[];
+  regen: { amount: number; turns: number } | null;
+  dot: { amount: number; turns: number } | null;
+  /** Turns left bound by Legal Binding. */
+  bound: number;
 }
 
 export type Action =
@@ -47,10 +55,11 @@ export type Action =
   | { kind: 'item'; item: string; target: string }
   | { kind: 'guard' }
   | { kind: 'run' }
-  | { kind: 'enemy'; move: string; target: string };
+  | { kind: 'enemy'; move: string; target: string }
+  | { kind: 'letter'; letter: string; mode: LetterMode; target: string };
 
 export type BattleEvent =
-  | { type: 'act'; actor: string; label: string; anim: 'attack' | 'cast' | 'guard' | 'item' }
+  | { type: 'act'; actor: string; label: string; anim: 'attack' | 'cast' | 'guard' | 'item' | 'read' | 'breakSeal' }
   | { type: 'damage'; target: string; amount: number }
   | { type: 'heal'; target: string; amount: number }
   | { type: 'fp'; target: string; amount: number }
@@ -87,6 +96,13 @@ export class Battle {
   /** Coin gained mid-battle (Pickpocket). */
   coinGained = 0;
   eaten: string[] = [];
+  /** Letters whose seals were broken in this fight. */
+  readonly broken: string[] = [];
+  /** Nobody deals damage before this time (Ceasefire). */
+  ceasefireUntil = -1;
+  /** A carried Keepsake raises the party's DEF. */
+  readonly keepsake: boolean;
+  readonly day: number;
   private lastEnemyBuff: { mult: number; turns: number; stat: 'atk' | 'def' } | null = null;
 
   constructor(game: GameState, encounterId: string, seed: string | number) {
@@ -98,7 +114,7 @@ export class Battle {
     for (const g of enc.guests ?? []) if (!members.includes(g)) members.push(g);
     for (const id of members) {
       const m = game.members[id];
-      const s = statsAt(id, m.level);
+      const s = statsWith(id, m.level, gearBonus(game, id));
       this.combatants.push({
         key: id,
         side: 'party',
@@ -121,6 +137,10 @@ export class Battle {
         taunt: 0,
         ko: m.hp <= 0,
         skills: [...MEMBERS[id].skills],
+        letters: carriedBy(game, id).filter((l) => game.letters[l]?.state === 'sealed'),
+        regen: null,
+        dot: null,
+        bound: 0,
       });
     }
     const counts = new Map<string, number>();
@@ -153,9 +173,15 @@ export class Battle {
         ko: false,
         ...(e.held ? { held: e.held } : {}),
         skills: [],
+        letters: [],
+        regen: null,
+        dot: null,
+        bound: 0,
       });
     });
     this.biscuit = !!game.flags['biscuit.joined'];
+    this.day = game.day;
+    this.keepsake = this.combatants.some((c) => c.letters.includes('L18'));
     // Opening positions: everyone a little way along, faster combatants sooner.
     for (const c of this.combatants) c.nextAt = (BALANCE.timelineBase / c.spd) * this.rng.range(0.25, 0.75);
     const mix = WEATHER_MIX[enc.region] ?? { clear: 1, rain: 1, wind: 1 };
@@ -242,17 +268,51 @@ export class Battle {
     const c = this.current();
     this.time = Math.max(this.time, c.nextAt);
     c.guarding = false;
-    if (c.ailments.fear && this.rng.chance(BALANCE.ailments.fearSkipChance)) {
-      const events: BattleEvent[] = [{ type: 'skip', actor: c.key }, { type: 'message', text: `${c.name} is too frightened to act.` }];
+    const events: BattleEvent[] = [];
+    if (c.regen) {
+      const amt = Math.min(c.maxHp - c.hp, Math.round(c.regen.amount));
+      if (amt > 0) {
+        c.hp += amt;
+        events.push({ type: 'heal', target: c.key, amount: amt });
+      }
+      if (--c.regen.turns <= 0) c.regen = null;
+    }
+    if (c.dot) {
+      const amt = Math.max(1, Math.round(c.dot.amount));
+      if (--c.dot.turns <= 0) c.dot = null;
+      this.hurt(c, amt, events);
+      const end = this.checkEnd();
+      if (c.ko || end.length > 0) {
+        if (c.ko) this.turn++;
+        return [...events, ...end];
+      }
+    }
+    if (c.bound > 0) {
+      c.bound--;
+      events.push({ type: 'skip', actor: c.key }, { type: 'message', text: `${c.name} is bound by the fine print.` });
       events.push(...this.endTurn(c, 'normal'));
       return events;
     }
-    return [];
+    if (c.ailments.fear && this.rng.chance(BALANCE.ailments.fearSkipChance)) {
+      events.push({ type: 'skip', actor: c.key }, { type: 'message', text: `${c.name} is too frightened to act.` });
+      events.push(...this.endTurn(c, 'normal'));
+      return events;
+    }
+    return events;
   }
 
   /** Skills the combatant could use right now (FP permitting). */
   usableSkills(c: Combatant): SkillDef[] {
     return c.skills.map((id) => SKILLS[id]).filter((s): s is SkillDef => !!s && s.fp <= c.fp);
+  }
+
+  /** Letter skills a member can use this turn: carry skills they can afford, or seals to break. */
+  letterOptions(c: Combatant, mode: LetterMode): { letter: string; skill: SkillDef; usable: boolean }[] {
+    return c.letters.map((letter) => {
+      const skill = letterSkill(letter, mode, c.id as PartyId, this.day);
+      const usable = !skill.passive && (mode === 'burst' || skill.fp <= c.fp);
+      return { letter, skill, usable };
+    });
   }
 
   runChance(): number {
@@ -275,7 +335,7 @@ export class Battle {
   }
 
   private defOf(c: Combatant): number {
-    return c.def * (c.defBuff?.mult ?? 1);
+    return c.def * (c.defBuff?.mult ?? 1) * (this.keepsake && c.side === 'party' ? 1.1 : 1);
   }
 
   /** The damage formula from the design, with weather and guarding. */
@@ -289,6 +349,10 @@ export class Battle {
   }
 
   private hurt(target: Combatant, amount: number, events: BattleEvent[]): void {
+    if (this.time < this.ceasefireUntil) {
+      events.push({ type: 'message', text: 'The ceasefire holds. Nobody can bring themselves to strike.' });
+      return;
+    }
     target.hp = Math.max(0, target.hp - amount);
     events.push({ type: 'damage', target: target.key, amount });
     if (target.hp === 0 && !target.ko) {
@@ -327,6 +391,19 @@ export class Battle {
         weight = s.weight;
         c.fp = Math.max(0, c.fp - s.fp);
         events.push({ type: 'act', actor: c.key, label: s.name, anim: s.power ? 'attack' : 'cast' });
+        this.useSkill(c, s, action.target, events);
+        break;
+      }
+      case 'letter': {
+        const member = c.id as PartyId;
+        const s = letterSkill(action.letter, action.mode, member, this.day);
+        if (action.mode === 'carry') c.fp = Math.max(0, c.fp - s.fp);
+        else {
+          this.broken.push(action.letter);
+          c.letters = c.letters.filter((l) => l !== action.letter);
+          events.push({ type: 'message', text: 'The seal breaks.' });
+        }
+        events.push({ type: 'act', actor: c.key, label: s.name, anim: action.mode === 'burst' ? 'breakSeal' : 'read' });
         this.useSkill(c, s, action.target, events);
         break;
       }
@@ -378,31 +455,110 @@ export class Battle {
     return events;
   }
 
-  private useSkill(c: Combatant, s: SkillDef, targetKey: string, events: BattleEvent[]): void {
-    const t = this.get(targetKey);
-    if (s.power) {
-      this.hurt(t, this.damage(c, t, s.power, s.magic), events);
-      if (s.inflict) this.inflict(t, s.inflict.ailment, s.inflict.chance, events);
-      if (s.steal && t.side === 'enemy') {
-        const coin = 2 + this.rng.int(0, 4);
-        this.coinGained += coin;
-        events.push({ type: 'message', text: `${c.name} lifts ${coin} coin.` });
+  /** The combatants a skill affects. */
+  private targetsFor(c: Combatant, s: SkillDef, targetKey: string): Combatant[] {
+    const foes = this.combatants.filter((x) => x.side !== c.side && !x.ko);
+    const friends = this.combatants.filter((x) => x.side === c.side && !x.ko);
+    switch (s.target) {
+      case 'allEnemies':
+        return foes;
+      case 'allAllies':
+        return friends;
+      case 'self':
+        return [c];
+      case 'anyAlly':
+        return [this.get(targetKey)];
+      default: {
+        const t = this.get(targetKey);
+        return t.ko ? [] : [t];
       }
     }
-    if (s.heal && !t.ko) {
-      const amt = Math.min(t.maxHp - t.hp, this.healAmount(s.heal.base + c.wil * s.heal.wilScale));
-      t.hp += amt;
-      events.push({ type: 'heal', target: t.key, amount: amt });
+  }
+
+  private useSkill(c: Combatant, s: SkillDef, targetKey: string, events: BattleEvent[]): void {
+    const targets = this.targetsFor(c, s, targetKey);
+    for (const t of targets) {
+      if (s.power) {
+        this.hurt(t, this.damage(c, t, s.power, s.magic), events);
+        if (s.inflict) this.inflict(t, s.inflict.ailment, s.inflict.chance, events);
+        if (s.steal && t.side === 'enemy') {
+          const coin = 2 + this.rng.int(0, 4);
+          this.coinGained += coin;
+          events.push({ type: 'message', text: `${c.name} lifts ${coin} coin.` });
+        }
+      }
+      if (s.maxHpFraction && !t.ko) this.hurt(t, Math.max(1, Math.round(t.maxHp * s.maxHpFraction)), events);
+      if (s.reviveFull) {
+        if (t.ko) {
+          t.ko = false;
+          t.hp = t.maxHp;
+          events.push({ type: 'revive', target: t.key }, { type: 'heal', target: t.key, amount: t.hp });
+        } else {
+          const amt = t.maxHp - t.hp;
+          t.hp = t.maxHp;
+          events.push({ type: 'heal', target: t.key, amount: amt });
+        }
+      }
+      if (s.heal && !t.ko) {
+        const amt = Math.min(t.maxHp - t.hp, this.healAmount(s.heal.base + c.wil * s.heal.wilScale));
+        t.hp += amt;
+        events.push({ type: 'heal', target: t.key, amount: amt });
+      }
+      if (s.cleanse && !t.ko && Object.keys(t.ailments).length > 0) {
+        t.ailments = {};
+        events.push({ type: 'message', text: `${t.name} feels clear-headed.` });
+      }
+      if (s.regen && !t.ko) t.regen = { amount: this.healAmount(s.regen.amount), turns: s.regen.turns };
+      if (s.dot && !t.ko) {
+        t.dot = { amount: s.dot.amount, turns: s.dot.turns };
+        events.push({ type: 'message', text: `${t.name} is in arrears.` });
+      }
+      if (s.atkBuff && !t.ko) t.atkBuff = { mult: this.buffMult(s.atkBuff.mult), turns: s.atkBuff.turns };
+      if (s.defBuff && !t.ko) t.defBuff = { mult: this.buffMult(s.defBuff.mult), turns: s.defBuff.turns };
+      if (s.defDown && !t.ko) {
+        t.defBuff = { ...s.defDown };
+        events.push({ type: 'message', text: `${t.name}’s guard drops.` });
+      }
+      if (s.delay && !t.ko) {
+        const ticks = s.delay * (s.threat && this.weatherAt(this.time) === 'wind' ? BALANCE.weather.windThreat : 1);
+        t.nextAt += ticks;
+        events.push({ type: 'delay', target: t.key, ticks: Math.round(ticks) });
+      }
+      if (s.toFront && !t.ko && t !== c) {
+        t.nextAt = this.time + 0.001;
+        events.push({ type: 'message', text: `${t.name} is up next.` });
+      }
+      if (s.skipTurns && !t.ko) {
+        if ((ENEMIES[t.id]?.tier ?? 1) >= 6) events.push({ type: 'message', text: `${t.name} is not bound by it.` });
+        else t.bound = s.skipTurns;
+      }
+    }
+    if (s.allNext) {
+      const allies = targets.filter((t) => t !== c).sort((a, b) => b.spd - a.spd);
+      allies.forEach((t, i) => {
+        t.nextAt = this.time + 0.001 * (i + 1);
+      });
+      events.push({ type: 'message', text: 'Everyone moves at once.' });
+    }
+    if (s.ceasefire) {
+      this.ceasefireUntil = (Math.floor(this.time / BALANCE.weatherTicks) + 1) * BALANCE.weatherTicks;
+      events.push({ type: 'message', text: 'A ceasefire. Nobody will strike until the weather turns.' });
+    }
+    if (s.coin) {
+      this.coinGained += s.coin;
+      events.push({ type: 'message', text: `${s.coin} coin changes hands.` });
+    }
+    if (s.partyFp) {
+      for (const a of this.alive(c.side)) {
+        const amt = Math.min(a.maxFp - a.fp, s.partyFp);
+        a.fp += amt;
+        if (amt > 0) events.push({ type: 'fp', target: a.key, amount: amt });
+      }
     }
     if (s.restoreFp) {
       const amt = Math.min(c.maxFp - c.fp, s.restoreFp);
       c.fp += amt;
       events.push({ type: 'fp', target: c.key, amount: amt });
-    }
-    if (s.delay) {
-      const ticks = s.delay * (s.threat && this.weatherAt(this.time) === 'wind' ? BALANCE.weather.windThreat : 1);
-      t.nextAt += ticks;
-      events.push({ type: 'delay', target: t.key, ticks });
     }
     if (s.taunt) {
       c.taunt = 3;
@@ -428,6 +584,11 @@ export class Battle {
         events.push({ type: 'message', text: `${c.name} re-sorts the queue.` });
       }
     }
+  }
+
+  /** Rain makes buffs stronger. */
+  private buffMult(mult: number): number {
+    return this.weatherAt(this.time) === 'rain' ? 1 + (mult - 1) * BALANCE.weather.rainSupport : mult;
   }
 
   private enemyMove(c: Combatant, move: EnemyMove, t: Combatant, events: BattleEvent[]): void {
@@ -576,6 +737,7 @@ export class Battle {
         results.levelUps.push({ id, level });
       }
     }
+    for (const id of this.broken) breakSeal(game, id);
     if (this.eaten.length > 0) game.flags['biscuit.chewed'] = ((game.flags['biscuit.chewed'] as number | undefined) ?? 0) + this.eaten.length;
     return results;
   }
