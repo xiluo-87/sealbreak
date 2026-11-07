@@ -5,7 +5,7 @@ import { GRANS_LETTER, LETTERS, wordCount } from '../src/data/letters';
 import { check } from '../src/game/conditions';
 import { migrate, normalizeState } from '../src/game/save';
 import { newGame } from '../src/game/state';
-import { assign, breakSeal, canRead, carriedBy, deliver, equip, openedCount, reseal } from '../src/letters/letters';
+import { assign, breakSeal, canRead, carriedBy, deliver, deliveryNotice, equip, openedCount, reseal } from '../src/letters/letters';
 
 const KEEP = 'Keep warm.';
 
@@ -125,6 +125,40 @@ describe('delivering', () => {
     const coinB = b.coin;
     expect(deliver(b, 'L13')?.halved).toBe(false);
     expect(b.coin).toBe(coinB + 200);
+  });
+
+  it('only calls a reward halved when there was coin or an item to halve', () => {
+    const g = newGame('Ada', 's');
+    breakSeal(g, 'L03');
+    expect(deliver(g, 'L03')?.halved).toBe(false);
+  });
+
+  it('says what was actually received, and never promises the full amount for an opened letter', () => {
+    const a = newGame('Ada', 's');
+    a.party = ['rookie', 'odile'];
+    a.members.rookie.xp = 10;
+    const full = deliver(a, 'L02');
+    expect(full && deliveryNotice('L02', full, 'Ada')).toEqual([
+      'Delivered “Final Demand”.',
+      'Ned laughs until he cries, and presses three loaves on you.',
+      'Received 3 × Loaf.',
+      'Everyone gains 30 XP.',
+      'Ada reached level 2!',
+    ]);
+    const b = newGame('Ada', 's');
+    breakSeal(b, 'L02');
+    const half = deliver(b, 'L02');
+    const lines = half ? deliveryNotice('L02', half, 'Ada') : [];
+    expect(lines).toContain('Received 1 × Loaf.');
+    expect(lines).toContain('With the seal broken, you got only half what you might have.');
+    expect(lines.join(' ')).not.toContain('three loaves');
+  });
+
+  it('gives an opened note to every letter whose note names an amount it would halve', () => {
+    for (const l of LETTERS) {
+      const halvable = (l.reward.coin ?? 0) > 0 || Object.keys(l.reward.items ?? {}).length > 0;
+      if (/\d|three|two|four|five/i.test(l.reward.note) && halvable) expect(l.reward.openedNote, l.id).toBeTruthy();
+    }
   });
 
   it('hands over accessories, which can be equipped by one member at a time', () => {

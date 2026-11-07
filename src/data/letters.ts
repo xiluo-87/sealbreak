@@ -15,6 +15,8 @@ export interface Reward {
   flags?: string[];
   /** Shown in the delivery message. */
   note: string;
+  /** Shown instead when the seal was broken and the coin or items were halved, if the usual note names an amount. */
+  openedNote?: string;
 }
 
 export interface LetterDef {
@@ -70,7 +72,7 @@ export const LETTERS: LetterDef[] = [
     tone: 'debt',
     carry: 'Collect',
     burst: 'Foreclose',
-    reward: { items: { loaf: 3 }, flags: ['ned.laughed'], note: 'Ned laughs until he cries, and presses three loaves on you.' },
+    reward: { items: { loaf: 3 }, flags: ['ned.laughed'], note: 'Ned laughs until he cries, and presses three loaves on you.', openedNote: 'Ned has a good laugh, and finds you a loaf.' },
     style: 'official',
     postmark: 'MILLBRIDGE',
     body: [
@@ -313,7 +315,7 @@ export const LETTERS: LetterDef[] = [
     carry: 'Fine Print',
     burst: 'Legal Binding',
     special: 'Fine Print also lowers DEF. Legal Binding makes one enemy (not a boss) skip three turns.',
-    reward: { coin: 200, flags: ['harbour.market'], note: 'The harbour market opens to you, and the Harbourmaster pays handsomely.' },
+    reward: { coin: 200, flags: ['harbour.market'], note: 'The harbour market opens to you, and the Harbourmaster pays handsomely.', openedNote: 'The harbour market opens to you. The Harbourmaster pays, though not as handsomely as he might have.' },
     style: 'formal',
     postmark: 'KINGSEND',
     body: [
@@ -383,7 +385,7 @@ export const LETTERS: LetterDef[] = [
     carry: 'Strongly Worded',
     burst: 'To Whom It May Concern',
     special: 'To Whom It May Concern hits every enemy at power 70.',
-    reward: { coin: 200, flags: ['pg.stamp'], note: 'The Postmaster General gives you his stamp, and 200 coin to go away.' },
+    reward: { coin: 200, flags: ['pg.stamp'], note: 'The Postmaster General gives you his stamp, and 200 coin to go away.', openedNote: 'The Postmaster General gives you his stamp, and 100 coin to go away.' },
     style: 'formal',
     postmark: 'NETHER ASHBY',
     body: [

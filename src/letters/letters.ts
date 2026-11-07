@@ -4,8 +4,9 @@
  */
 import { ACCESSORIES } from '../data/accessories';
 import { BALANCE } from '../data/balance';
+import { ITEMS } from '../data/items';
 import { LETTER_BY_ID, type LetterDef, SLOTS_PER_MEMBER } from '../data/letters';
-import { statsAt } from '../data/party';
+import { MEMBERS, statsAt } from '../data/party';
 import type { GameState, LetterState, PartyId } from '../game/state';
 
 export function letter(id: string): LetterDef {
@@ -90,6 +91,7 @@ export interface DeliveryResult {
   accessory: string | null;
   xpEach: number;
   levelUps: { id: PartyId; level: number }[];
+  /** True when the seal was broken and the coin or items were halved. */
   halved: boolean;
   note: string;
 }
@@ -134,7 +136,28 @@ export function deliver(game: GameState, id: string): DeliveryResult | null {
       levelUps.push({ id: member, level });
     }
   }
-  return { coin, items, accessory, xpEach: BALANCE.deliveryXp, levelUps, halved, note: l.reward.note };
+  const partial = halved && ((l.reward.coin ?? 0) > 0 || Object.keys(l.reward.items ?? {}).length > 0);
+  return { coin, items, accessory, xpEach: BALANCE.deliveryXp, levelUps, halved: partial, note: (partial && l.reward.openedNote) || l.reward.note };
+}
+
+function joinList(parts: string[]): string {
+  if (parts.length <= 1) return parts.join('');
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
+/** The lines shown after a delivery: the reward note, what was received, XP and level-ups. */
+export function deliveryNotice(id: string, r: DeliveryResult, rookieName: string): string[] {
+  const lines = [`Delivered “${letter(id).title}”.`, r.note];
+  const got = [
+    ...(r.coin > 0 ? [`${r.coin} coin`] : []),
+    ...Object.entries(r.items).map(([item, n]) => `${n} × ${ITEMS[item]?.name ?? item}`),
+    ...(r.accessory ? [ACCESSORIES[r.accessory]?.name ?? r.accessory] : []),
+  ];
+  if (got.length > 0) lines.push(`Received ${joinList(got)}.`);
+  if (r.halved) lines.push('With the seal broken, you got only half what you might have.');
+  lines.push(`Everyone gains ${r.xpEach} XP.`);
+  for (const up of r.levelUps) lines.push(`${MEMBERS[up.id].name.replace('{name}', rookieName)} reached level ${up.level}!`);
+  return lines;
 }
 
 /** Accessory bonus for a member. */
