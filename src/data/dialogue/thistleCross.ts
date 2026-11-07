@@ -72,7 +72,7 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
     nodes: {
       tin: {
         lines: [
-          narrate('You touch the tin in your coat pocket. Your gran kept one letter in it for thirty years. It’s why you’re here.'),
+          narrate('You touch the tin in your coat pocket. Your gran kept one letter in it for forty years. It’s why you’re here.'),
           say('rookie', 'My gran had a letter that came late. She read it until the folds went soft.', 'neutral'),
           say('odile', 'Then you know what these are worth to somebody.', 'neutral'),
           say('odile', 'It’s five days to Kingsend if you go straight. Seven if you stop for people.', 'neutral'),

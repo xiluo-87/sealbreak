@@ -70,7 +70,7 @@ export const DETOUR_DIALOGUE: Dialogue[] = [
       sealed: {
         lines: [
           narrate('Brother Tolliver opens the parcel with trembling hands. Inside is a small brown book and a note.'),
-          say('librarian', '“Sorry. Forty years. Got distracted by a war.” Signed, H. Tolliver. My uncle Hal!'),
+          say('librarian', '“I have been at the war, which is a poor excuse, but it is the one I have.” Signed, H. Tolliver. My uncle Hal!'),
           say('librarian', 'The fine. The fine is… let me see… no, I can’t charge a dead man. I can frame it, though.'),
           say('librarian', 'For this, you may have the run of the archive. Everything. Even the records we pretend we don’t keep.'),
         ],
@@ -145,8 +145,8 @@ export const DETOUR_DIALOGUE: Dialogue[] = [
       sealed: {
         lines: [
           narrate('Moss reads it, and snorts, and reads it again, and his eyes go wet.'),
-          say('moss', 'Hale. Hale and his two shillings. I borrowed them for a game of cards and lost them in about a minute.'),
-          say('moss', '“You still owe me two shillings and don’t you dare die before you pay up.” Well. I didn’t. Did I, Hale.'),
+          say('moss', 'Hale. Hale and his two shillings. “Three queens in one hand is a lot of queens.” It was. One of them was up my sleeve.'),
+          say('moss', '“If I don’t get out, pay it to my mum.” I went round, after. She wouldn’t take it. Said she had socks.'),
           say('moss', 'I’ll buy him a pint with them. Two pints. Here, take my map. I’ve walked every road in this country looking for the lads’ families. It’s got everyone on it.'),
         ],
         then: [{ deliver: 'L22' }],
@@ -178,7 +178,7 @@ export const DETOUR_DIALOGUE: Dialogue[] = [
         lines: [
           narrate('The letter is addressed to whoever finds it. You have found it. You read it aloud, at the post, to nobody.'),
           narrate('It is a roll call. Every member of Squad Seven, one after another, and after each name, in a different hand: present.'),
-          narrate('The last line is in pencil: We’re all here, whoever you are. Come and say hello.'),
+          narrate('The last line is pressed hard into the paper: Tell them we were a good squad.'),
         ],
         next: 'fenn',
       },
@@ -240,7 +240,8 @@ export const DETOUR_DIALOGUE: Dialogue[] = [
         lines: [
           say('rookie', 'Tomas didn’t write it. Someone wrote it for him, because he never could.', 'sad'),
           narrate('Ines looks at Odile for a long moment, and Odile doesn’t look away.'),
-          say('ines', 'Then somebody else kept a light on for me. I’ll keep mine on for them.'),
+          say('ines', 'Forty years I’ve read that by the lamp. You could have let me keep it.'),
+          say('ines', 'I’ll keep the light on. Not for whoever wrote that.'),
         ],
         next: 'charts',
       },
@@ -257,7 +258,11 @@ export const DETOUR_DIALOGUE: Dialogue[] = [
     nodes: {
       offer: {
         lines: [say('barnaby', 'Barnaby Lisk, assistant keeper. Well, assistant to the keeper. Well, I carry things. I’ve carried things up these stairs for forty years.')],
-        choices: deliveryChoices('L24', 'I Am Not Dead', { sealed: 'sealed', opened: 'opened' }),
+        choices: deliveryChoices('L24', 'I Am Not Dead', { sealed: 'sealed', opened: 'opened', resealed: 'resealed' }),
+      },
+      resealed: {
+        lines: [say('barnaby', 'That’s not my seal. I pressed a coat button into mine. …Never mind. It’s still my letter.')],
+        next: 'sealed',
       },
       sealed: {
         lines: [

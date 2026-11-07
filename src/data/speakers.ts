@@ -22,7 +22,7 @@ export const SPEAKERS: Record<string, Speaker> = {
   brannigan: { name: 'Brannigan' },
   storekeep: { name: 'Storekeeper' },
   landlord: { name: 'Landlord' },
-  ashworth: { name: 'Mr Ashworth' },
+  ashworth: { name: 'Mr. Ashworth' },
   miner1: { name: 'Miner' },
   miner2: { name: 'Miner' },
   dunnock: { name: 'Old Man Dunnock' },

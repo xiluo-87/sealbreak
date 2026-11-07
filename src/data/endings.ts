@@ -35,18 +35,18 @@ const RECIPIENTS: Record<string, string | ((s: GameState) => string)> = {
       ? 'Mara Vell-Quay keeps her letter on the shelf. Someone on the other side thought her worth a kind lie, she says. She is still deciding whether that is better or worse.'
       : 'Mara Vell-Quay keeps her letter on the shelf with a cup in front of it, always full.',
   L15: 'Brin Pike never paints the boat blue. It steers left. She leans right.',
-  L16: 'Mr Ogilvy’s six complaints hang together in the corridor at Post Headquarters. Someone writes a seventh, as a joke, and posts it.',
+  L16: 'Mr. Ogilvy’s complaints hang together in the corridor at Post Headquarters, with a gap where the fourth should be. Someone writes a seventh, as a joke, and posts it.',
   L17: 'The Queen keeps Pip’s drawing on her mantelpiece, between two Old Masters who have been moved to make room.',
   L18: 'Cressida Vane keeps her father’s letter in her breast pocket, where the regulations say her warrant card should go.',
   L19: 'Sister Anselm still says grace for two at every meal, and now she says it smiling.',
   L20: 'The abbey library has its book back, forty years overdue. The fine is waived, then reinstated, then framed.',
   L21: 'Squad Seven’s names are read aloud at the Old Front every year. Someone always answers for each of them.',
-  L22: 'Private Moss gets his two shillings and spends them both on a pint for an old friend who never turns up.',
+  L22: 'Private Moss pays his two shillings at last, on a pint for an old friend who never turns up.',
   L23: (s) =>
     s.flags['truth.L23'] === 'truth'
-      ? 'Ines Dove knows who really wrote her letter. She keeps the light on anyway, for whoever is out there.'
+      ? 'Ines Dove knows who really wrote her letter. She keeps it in a drawer she doesn’t open, and keeps the light on anyway.'
       : 'Ines Dove keeps the light on at Gull’s Rest, every night, however long it takes.',
-  L24: 'Barnaby Lisk writes home at last. Three pages, mostly apologies. His family write back eleven.',
+  L24: 'Barnaby Lisk goes home at last. His family talk for eleven hours straight. He writes to Ines every week, mostly apologies.',
 };
 
 /** One line per letter delivered, in the order of the road. */
@@ -75,7 +75,9 @@ function partyEpilogues(s: GameState, ending: EndingId): string[] {
     out.push(
       ending === 'openbook'
         ? 'Odile is called to account in Kingsend. Half the country wants her in prison and the other half wants her knighted. She goes home to Thistle Cross in between hearings and does the crossword.'
-        : 'Odile goes home to Thistle Cross and the office with no post in it. On Fridays she still has half a stout and the crossword, and nobody talks to her until it’s done.',
+        : ending === 'goat'
+          ? 'Odile reopens the Thistle Cross office, on the grounds that nobody has told her not to. On Fridays she still has half a stout and the crossword.'
+          : 'Odile goes home to Thistle Cross and the office with no post in it. On Fridays she still has half a stout and the crossword, and nobody talks to her until it’s done.',
     );
   }
   if (s.flags['sorrel.beaten']) out.push('Lark Sorrel is promoted for failing to catch you. Nobody understands why, least of all her.');
@@ -112,10 +114,10 @@ export function odilesLetter(s: GameState): NonNullable<EndingPage['letter']> {
     postmark: 'THISTLE CROSS',
     body: [
       `${s.rookieName},`,
-      'By the time you read this I will have said all of it out loud, which is more than I managed in forty years of writing.',
+      'I’ve said all of it out loud now, so this should be easy. It isn’t. Forty years of other people’s letters and I can’t start my own.',
       'You carried every one of them the whole way. Even the ones that weren’t true. Perhaps those most of all.',
       'I won’t pretend to know if I did right. I know your gran said good morning to me every week for twelve years, and I would do it all again for that.',
-      'The Post was never the building. Go home the long way, and stop at every gate.',
+      'I don’t know how to finish this. I’ve never had to sign one. Go home the long way, and stop at every gate.',
     ],
     signature: 'Odile',
   };
@@ -144,7 +146,7 @@ export function endingPages(s: GameState, ending: EndingId): EndingPage[] {
         {
           lines:
             s.flags['truth.L14'] === 'truth' || s.flags['truth.L23'] === 'truth'
-              ? ['In the morning Vane writes her report. It names the Kind Hand. Then it recommends no further action, on the grounds that the Inspectorate has more urgent business, and signs it.', 'Odile goes home to Thistle Cross. Nobody comes for her.']
+              ? ['In the morning Vane writes her report. It names the Kind Hand, and recommends no further action, on the grounds that the Inspectorate has more urgent business. She signs it.', 'Odile goes home to Thistle Cross. Nobody comes for her.']
               : ['In the morning Vane closes the file on the Kind Hand. Under CONCLUSION she writes: Hand not identified.', 'Then she takes Odile to breakfast, and they talk for three hours, and nobody else ever knows what about.'],
         },
         { lines: ['When you get back to Thistle Cross, there is a letter waiting for you in the empty post office. You know the hand.'], letter: odilesLetter(s) },

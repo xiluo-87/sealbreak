@@ -3,7 +3,7 @@ import type { Dialogue } from '../../game/dialogue';
 import { beforeAfter, deliveryChoices, narrate, say, simple } from './helpers';
 
 export const FEN_DIALOGUE: Dialogue[] = [
-  simple('no-going-back', [narrate('The way back is behind you now. The Post closes in a week; there’s only forward.')]),
+  simple('no-going-back', [narrate('The way back is behind you now. The Post won’t wait; there’s only forward.')]),
   simple('fen-road-start', [
     say('fenn', 'Fen Road. Mind your feet. The boards are older than me and in worse shape.', 'neutral'),
     say('odile', 'Bellwether Fen’s on stilts. They say the eels have the vote.', 'happy'),
@@ -19,9 +19,9 @@ export const FEN_DIALOGUE: Dialogue[] = [
         lines: [
           narrate('A man in a black gown and a tall hat is waiting at the end of the boardwalk, as if he had been told you were coming.'),
           say('grist', 'Halt. Bailiff Grist, Bellwether Fen. You are carrying a sack.'),
-          say('rookie', 'It’s the Royal Mail.', 'neutral'),
+          say('rookie', 'It’s the Royal Post.', 'neutral'),
           say('grist', 'It is a sack. Sacks are freight. Freight on the public boards is subject to boardage. Boardage is twelve coin.'),
-          say('odile', 'There’s no such thing as boardage, Mr Grist.', 'angry'),
+          say('odile', 'There’s no such thing as boardage, Mr. Grist.', 'angry'),
           say('grist', 'There is now. Fined. Report to my office to settle it, and we’ll discuss the contents of that sack.'),
           narrate('He strides off along the boards, his gown dragging in the water.'),
           say('fenn', 'That man fines puddles.', 'neutral'),
@@ -40,7 +40,7 @@ export const FEN_DIALOGUE: Dialogue[] = [
     id: 'constable',
     entry: [{ if: { flag: 'grist.beaten' }, node: 'after' }, { node: 'before' }],
     nodes: {
-      before: { lines: [say('constable', 'Don’t look at me. I just hold the keys. Mr Grist holds everything else.'), say('constable', 'Including my wages, which he fined.')] },
+      before: { lines: [say('constable', 'Don’t look at me. I just hold the keys. Mr. Grist holds everything else.'), say('constable', 'Including my wages, which he fined.')] },
       after: { lines: [say('constable', 'First time in eleven years nobody’s been fined before lunch. I could get used to this.')] },
     },
   },
@@ -135,7 +135,7 @@ export const FEN_DIALOGUE: Dialogue[] = [
         lines: [
           narrate('Grist sits down heavily on the boards. His hat floats gently away down the channel.'),
           say('grist', 'This is… this is highly irregular.'),
-          say('constable', 'I’ll take those, Mr Grist.'),
+          say('constable', 'I’ll take those, Mr. Grist.'),
           narrate('The constable unhooks the keys from Grist’s belt and walks straight to the lock-up.'),
         ],
         then: [{ set: 'grist.beaten' }],
@@ -173,7 +173,7 @@ export const FEN_DIALOGUE: Dialogue[] = [
           say('bea', 'Ivo.'),
           narrate('She reads it standing up, in the wind, without moving.'),
           say('bea', '“Nine times.” He started everything nine times. Couldn’t tie a knot on the first go.'),
-          say('bea', 'He went off in a hat and I stayed with the punts. I was so angry I didn’t go down to the jetty to see him off.'),
+          say('bea', 'He went off in a hat and I stayed with the punts. I said things at the jetty I’ve been taking back ever since.'),
           say('bea', 'Well. He’s said his piece. I suppose I can stop arguing with him in my head now.'),
         ],
         next: 'punt',

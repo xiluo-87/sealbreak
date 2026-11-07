@@ -103,7 +103,7 @@ export const CAMP_DIALOGUE: Dialogue[] = [
         lines: [
           narrate('Fenn is singing, very quietly, something about a miller’s daughter. He doesn’t know all the words. He doesn’t seem to mind.'),
           say('juniper', 'I didn’t know you could sing.', 'surprised'),
-          say('fenn', 'I can’t. Dunnock couldn’t either. It never stopped him.', 'happy'),
+          say('fenn', 'I can’t. Fisher couldn’t either. It never stopped him.', 'happy'),
         ],
         then: [{ set: 'camp.letter' }],
       },

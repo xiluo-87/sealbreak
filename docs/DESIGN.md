@@ -128,7 +128,7 @@ Hand: **R** means the letter is real, and **F** means it was forged (see section
 |---|---|---|---|---|---|---|
 | L12 | Come Home, You Stubborn Fool | Ada Wick → Capt. Joss Wick, dune raider (found in a road encounter) | R | Anger | Scold / Full Force | Raiders leave the road |
 | L13 | Terms of Armistice (Copy) | Treaty Office → Harbourmaster Quay | R | News | Fine Print (also lowers DEF) / Legal Binding (one non-boss enemy skips 3 turns) | Opens the harbour market, plus a large coin reward |
-| L14 | We Were Wrong About Each Other | Sgt. Oren Vael, a Salt soldier → Mara Vell-Quay | F | Apology | Truce / Ceasefire (nobody deals damage for one forecast) | Salt Road shops and locals warm to the party |
+| L14 | We Were Wrong About Each Other | Sgt. Oren Vael, a Vell soldier → Mara Vell-Quay | F | Apology | Truce / Ceasefire (nobody deals damage for one forecast) | Salt Road shops and locals warm to the party |
 | L15 | Last Will (Unwitnessed) | Capt. Pike → Brin Pike | R | Grief | Inheritance / Estate (also +12 FP to the party) | A small boat: the Gull's Rest detour costs no days |
 
 **Kingsend**

@@ -71,6 +71,7 @@ export const COPPERHILL_DIALOGUE: Dialogue[] = [
     id: 'brannigan',
     entry: [
       { if: { letter: 'L08', is: 'delivered' }, node: 'after' },
+      { if: { flag: 'union.side', is: 'company' }, node: 'offerCold' },
       { if: { flag: 'union.brawl' }, node: 'offer' },
       { node: 'brawl' },
     ],
@@ -91,12 +92,16 @@ export const COPPERHILL_DIALOGUE: Dialogue[] = [
         lines: [say('brannigan', 'Post, is it? Anything for the Union Hall? We’ve had nothing but notices for a year.')],
         choices: deliveryChoices('L08', 'Wages Owed, Company Scrip', { sealed: 'sealed', opened: 'opened' }),
       },
+      offerCold: {
+        lines: [say('brannigan', 'Post, is it? You picked your side. Go on, then. What’s the Company sent us now?')],
+        choices: deliveryChoices('L08', 'Wages Owed, Company Scrip', { sealed: 'sealed', opened: 'opened' }),
+      },
       sealed: {
         lines: [
           narrate('Brannigan reads it aloud to the men on the steps. By the second paragraph there is muttering. By the third, laughter.'),
           say('brannigan', '“Any man who prefers coin may apply in writing.” Did you hear that, lads? In writing!'),
           say('brannigan', 'Get the paper out. Every man in Copperhill is going to apply in writing. Every single one. In his best hand.'),
-          say('brannigan', 'You’ve done us a turn. Here: a Miners’ Token. It opens the old workings by the east road. There’s stores up there nobody’s touched since the war.'),
+          say('brannigan', 'That’s a turn, I’ll give you that. Here: a Miners’ Token. It opens the old workings by the east road. There’s stores up there nobody’s touched since the war.'),
         ],
         then: [{ deliver: 'L08' }],
       },
@@ -145,7 +150,7 @@ export const COPPERHILL_DIALOGUE: Dialogue[] = [
         lines: [
           narrate('Old Brass shudders, lets out a long sigh of steam, and settles onto its tracks. The light in its face goes out.'),
           say('fenn', 'The Fourth left it here to hold the pass, so the rest of us could get over the river.', 'sad'),
-          say('fenn', 'Squad Seven stayed with it. I was in Seven. When the shelling started, I ran.', 'sad'),
+          say('fenn', 'Squad Seven was dug in up at the Front, holding the road for them. I was in Seven. When the shelling started, I ran.', 'sad'),
           say('odile', 'You were nineteen, Fenn.', 'sad'),
           say('fenn', 'So were they.', 'sad'),
           narrate('Nobody says anything for a while. The engine ticks as it cools.'),
@@ -177,7 +182,7 @@ export const COPPERHILL_DIALOGUE: Dialogue[] = [
       plain: {
         lines: [
           narrate('Fenn stands in front of the memorial for a long time. His lips move as he reads the names.'),
-          say('fenn', 'Hale. Dunnock. Prentice. Ames. Coyle. Wren-Davies. Moss.', 'sad'),
+          say('fenn', 'Hale. Dunnock. Pryce. Okafor. Lister. Fisher. Moss.', 'sad'),
           say('fenn', 'Moss isn’t dead. He’s just on here. Somebody got it wrong.', 'neutral'),
         ],
         next: 'open',
@@ -268,7 +273,7 @@ export const COPPERHILL_DIALOGUE: Dialogue[] = [
         lines: [
           narrate('He comes back with a medal on a faded ribbon.'),
           say('dunnock', 'They sent me this after. I never knew where to put it. You’ve a long way to walk. Take it.'),
-          say('dunnock', 'And your big friend there. Harrow. Sam wrote about a Harrow. Tell him I said so.'),
+          say('dunnock', 'And your big friend there. Harrow. Sam wrote about a Harrow. Tell him he’s welcome at the forge.'),
         ],
         then: [{ deliver: 'L09' }],
       },
