@@ -3,6 +3,7 @@
  * forecast on the canvas; menus, the party panel and messages are HTML over
  * it. All rules live in Battle; this only chooses actions and plays events.
  */
+import { sound } from '../audio';
 import { hint } from '../input/hints';
 import { BALANCE } from '../data/balance';
 import { ENEMIES } from '../data/enemies';
@@ -435,6 +436,7 @@ export class BattleScene implements Scene {
           if (e.anim === 'attack') v.lunge = 1;
         }
         this.message(`${c.name}: ${e.label}`);
+        sound(e.anim === 'attack' ? 'swing' : e.anim === 'breakSeal' ? 'wax' : e.anim === 'guard' ? 'blip' : 'swoosh');
         this.wait = e.anim === 'attack' ? 260 : e.anim === 'breakSeal' ? 720 : 420;
         break;
       }
@@ -445,11 +447,13 @@ export class BattleScene implements Scene {
           v.t = 0;
         }
         if (v) v.flash = 1;
+        sound('hit');
         this.popup(e.target, String(e.amount), '#fff4e0');
         this.wait = 240;
         break;
       }
       case 'heal':
+        sound('heal');
         this.popup(e.target, `+${e.amount}`, '#9fe39a');
         this.wait = 240;
         break;
@@ -458,6 +462,7 @@ export class BattleScene implements Scene {
         this.wait = 220;
         break;
       case 'status':
+        sound('status');
         this.popup(e.target, `${e.ailment[0]?.toUpperCase()}${e.ailment.slice(1)}!`, '#e8b0f0');
         this.wait = 300;
         break;
@@ -471,6 +476,7 @@ export class BattleScene implements Scene {
           v.anim = this.battle.get(e.target).side === 'enemy' ? 'defeat' : 'knockedOut';
           v.t = 0;
         }
+        sound('ko');
         this.wait = 420;
         break;
       }
@@ -497,12 +503,14 @@ export class BattleScene implements Scene {
           v.t = 0;
           if (e.what === 'headbutt') v.lunge = 1;
         }
+        sound('bleat');
         this.wait = 380;
         break;
       }
       case 'join': {
         const c = this.battle.get(e.target);
         if (!this.visuals.has(c.key)) this.addVisual(c);
+        sound(c.side === 'party' ? 'join' : 'swoosh');
         this.popup(e.target, c.side === 'party' ? 'Joins!' : 'Arrives!', '#f0d890');
         this.wait = 420;
         break;
@@ -510,6 +518,7 @@ export class BattleScene implements Scene {
       case 'escape': {
         const v = this.visual(e.target);
         if (v) v.alpha = 0;
+        sound('swoosh');
         this.popup(e.target, 'Gone!', '#f0d890');
         this.wait = 300;
         break;
@@ -527,6 +536,7 @@ export class BattleScene implements Scene {
     this.phase = 'done';
     this.closeMenu();
     this.autoEl.hidden = true;
+    sound(result === 'victory' ? 'victory' : result === 'defeat' ? 'defeat' : result === 'delivered' ? 'chime' : 'swoosh');
     if (result === 'fled' || result === 'delivered') {
       this.battle.applyResults(this.game);
       this.hooks.onEnd(result, null);
@@ -570,6 +580,19 @@ export class BattleScene implements Scene {
     const r = this.results;
     this.results = null;
     this.hooks.onEnd('victory', r);
+  }
+
+  /**
+   * The battle tune and how much of it plays: rain keeps it to bass and
+   * strings, clear skies bring in the drums and fiddle, wind brings in
+   * everything. Bosses never drop below the middle. It stops for the result.
+   */
+  music(): { song: string | null; intensity: number } {
+    if (this.phase === 'done' || this.phase === 'end') return { song: null, intensity: 0 };
+    const w = this.battle.forecast()[0];
+    const boss = this.battle.combatants.some((c) => c.side === 'enemy' && ENEMIES[c.id]?.boss);
+    const level = w === 'rain' ? 0 : w === 'clear' ? 1 : 2;
+    return { song: 'battle', intensity: boss ? Math.max(1, level) : level };
   }
 
   update(ctx: SceneContext): void {

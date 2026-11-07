@@ -2,6 +2,7 @@
  * The satchel: who carries which letter, what's left in the sack, reading,
  * breaking a seal at camp, resealing, and the Inspectorate's interest.
  */
+import { sound } from '../audio';
 import { letterSkill } from '../battle/letterSkills';
 import { FENNS_LETTER, GRANS_LETTER, LETTERS, type LetterDef } from '../data/letters';
 import { MEMBERS } from '../data/party';
@@ -215,6 +216,7 @@ export class Satchel {
           detail: 'The Inspectorate will take more interest in you',
           action: () => {
             breakSeal(this.game, def.id);
+            sound('wax');
             this.closeMenu();
             this.render();
             this.reader.show(def, 'broken');

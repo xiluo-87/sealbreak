@@ -2,6 +2,7 @@
  * The letter reader: a sheet of paper with the envelope's wax, stamp and
  * postmark, in a hand that suits the author.
  */
+import { sound } from '../audio';
 import { touchMode } from '../input/hints';
 import type { LetterDef } from '../data/letters';
 
@@ -46,6 +47,7 @@ export class LetterReader {
         <footer class="reader-hint">${touchMode() ? 'Tap to close' : 'Enter to close'}</footer>
       </article>`;
     this.el.hidden = false;
+    sound('paper');
   }
 
   close(): void {

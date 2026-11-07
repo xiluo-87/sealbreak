@@ -1,3 +1,5 @@
+import { audio, unlockOnGesture } from './audio';
+import { loadSettings, settings } from './game/settings';
 import { FixedStepClock } from './game/clock';
 import { parseDebugOptions } from './game/debugOptions';
 import { startLoop } from './game/loop';
@@ -8,6 +10,14 @@ import { Screen } from './render/screen';
 import { App } from './ui/app';
 import { DebugOverlay } from './ui/debugOverlay';
 
+function safeStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 function startGame(root: HTMLElement): void {
   const options = parseDebugOptions(window.location.search);
   document.body.classList.add('game');
@@ -15,6 +25,9 @@ function startGame(root: HTMLElement): void {
   const overlay = new DebugOverlay(root, options.overlay);
   const input = new Keyboard();
   input.attach(window);
+  loadSettings(safeStorage());
+  audio.setVolume(settings.volume, settings.muted);
+  unlockOnGesture(window);
   const touch = new TouchControls(root, input);
   const rng = new Rng(options.seed);
   const clock = new FixedStepClock({ speed: options.speed });
@@ -26,6 +39,9 @@ function startGame(root: HTMLElement): void {
       touch.setMode(app.touchMode());
       if (input.wasPressed('debug')) overlay.toggle();
       app.update(ctx);
+      const cue = app.musicCue();
+      audio.music(cue.song, cue.intensity);
+      audio.update();
       input.endStep();
     },
     render(alpha, now) {

@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** Milestone 8 is done: the story can be played from the first scene to any of its endings, and the game plays on phones. Kingsend, the Dead Letter Office, Chief Inspector Vane and every ending are in, with epilogues for each recipient reached. The three detours come next, in Milestone 9, then sound and polish.
+**Status:** Milestones 0 to 10 are done: the story can be played from the first scene to any of its endings, with all three detours, on a keyboard or a phone, with music and sound effects made entirely in Web Audio. Polish, options and a balance pass come next, in Milestone 11.
 
 ## The idea
 

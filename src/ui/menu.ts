@@ -1,4 +1,5 @@
 /** A keyboard- and pointer-driven list menu, used by the title screen and the pause menu. */
+import { sound } from '../audio';
 import type { Keyboard } from '../input/keyboard';
 
 export interface MenuItem {
@@ -60,7 +61,10 @@ export class ListMenu {
         }
       });
       li.addEventListener('click', () => {
-        if (!item.disabled) item.action();
+        if (!item.disabled) {
+          sound('select');
+          item.action();
+        }
       });
       this.list.appendChild(li);
     });
@@ -73,6 +77,7 @@ export class ListMenu {
     }
     this.render();
     this.onHighlight?.(this.selected);
+    sound('blip');
   }
 
   update(input: Keyboard): void {
@@ -80,8 +85,14 @@ export class ListMenu {
     if (input.wasPressed('down')) this.move(1);
     if (input.wasPressed('confirm')) {
       const item = this.items[this.selected];
-      if (item && !item.disabled) item.action();
-    } else if (input.wasPressed('cancel')) this.onCancel?.();
+      if (item && !item.disabled) {
+        sound('select');
+        item.action();
+      }
+    } else if (input.wasPressed('cancel') && this.onCancel) {
+      sound('back');
+      this.onCancel();
+    }
   }
 
   destroy(): void {

@@ -2,6 +2,7 @@
  * Glue between scenes and menus: the title screen, new game and naming,
  * the field, the pause menu and save slots.
  */
+import { songFor, sound } from '../audio';
 import { BattleScene } from '../battle/battleScene';
 import { getEncounter } from '../data/enemies';
 import { ITEMS } from '../data/items';
@@ -268,7 +269,10 @@ export class App {
     this.field?.destroy();
     const field = new FieldScene(state, this.ui, {
       autosave: (s) => {
-        if (writeSlot(this.storage, 'auto', s, Date.now())) this.toast.show('Saved');
+        if (writeSlot(this.storage, 'auto', s, Date.now())) {
+          this.toast.show('Saved');
+          sound('save');
+        }
       },
       openMenu: () => this.showPause(),
       battle: (id, done) => this.startBattle(id, done),
@@ -440,6 +444,7 @@ export class App {
         disabled: state.coin < price,
         action: () => {
           state.coin -= price;
+          sound('coin');
           state.items[item] = Math.min(99, (state.items[item] ?? 0) + 1);
           this.toast.show(`Bought a ${ITEMS[item]?.name.toLowerCase() ?? item}`);
           this.showShop(state, id, done);
@@ -469,6 +474,7 @@ export class App {
           disabled: state.coin < price,
           action: () => {
             state.coin -= price;
+            sound('heal');
             applyAll([{ heal: 1, fp: 1 }], state);
             for (const m of state.party) {
               const st = statsAt(m, state.members[m].level);
@@ -611,6 +617,7 @@ export class App {
       return;
     }
     ringBell(state.road);
+    sound('bell');
     this.useUp(state, 'repel-bell');
     this.toast.show('You ring the bell. The road goes quiet.', 2600);
     this.showItems(state);
@@ -622,6 +629,7 @@ export class App {
       return;
     }
     this.useUp(state, 'apple');
+    sound('bleat');
     applyAll([{ add: 'biscuit.trust', by: 1 }], state);
     this.toast.show('Biscuit eats the apple, core and all, and looks at you differently.', 3000);
     this.showItems(state);
@@ -679,6 +687,17 @@ export class App {
   }
 
   /** What the screen is doing, for the touch controls. */
+  /** Which tune fits what is on screen. */
+  musicCue(): { song: string | null; intensity: number } {
+    if (this.ending) return { song: 'ending', intensity: 0 };
+    if (this.scene instanceof BattleScene) return this.scene.music();
+    if (this.field && this.scene === this.field) {
+      const def = this.field.map.def;
+      return { song: songFor(def.region, def.theme), intensity: 0 };
+    }
+    return { song: 'thistle', intensity: 0 };
+  }
+
   touchMode(): TouchMode {
     if (this.satchel || this.reader.open || this.menu || this.form || this.titleEl) return 'menu';
     if (this.scene instanceof BattleScene) return 'battle';

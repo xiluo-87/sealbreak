@@ -3,6 +3,7 @@
  * events and cutscenes. Story state lives in GameState; this scene only
  * keeps what is needed to draw and animate it.
  */
+import { sound } from '../audio';
 import { CUTSCENES } from '../data/cutscenes';
 import { DIALOGUE } from '../data/dialogue';
 import { MAPS } from '../data/maps';
@@ -232,6 +233,7 @@ export class FieldScene implements Scene {
       this.fight(id, finish, f.after);
     };
     if (d && deliveries.length > 0) {
+      sound('chime');
       // Report what the delivery brought, then carry on.
       const lines = deliveries.flatMap((r) => deliveryNotice(r.letter, r, this.state.rookieName).map((text) => ({ text })));
       lines.push({ text: 'You can read it in the satchel.' });
@@ -249,6 +251,7 @@ export class FieldScene implements Scene {
   /** Starts a battle. A recipient who was handed their letter mid-fight then reacts to it. */
   fight(id: string, after: () => void = () => undefined, won?: string): void {
     this.inBattle = true;
+    sound('encounter');
     this.hooks.battle(id, (result, delivered) => {
       this.inBattle = false;
       if (result === 'delivered' && delivered && DIALOGUE[`recipient-${delivered}`]) this.say(`recipient-${delivered}`, after);
@@ -443,6 +446,7 @@ export class FieldScene implements Scene {
     if (exit && check(exit.if, this.state)) {
       this.warp = { exit, phase: 'out' };
       this.fadeTo = 1;
+      if (!exit.travel) sound('door');
       return;
     }
     if (this.runEvents('step', m.tx, m.ty)) return;
@@ -455,6 +459,7 @@ export class FieldScene implements Scene {
     const x = m.tx + dx;
     const y = m.ty + dy;
     const npc = this.visibleNpcs().find((n) => n.actor.m.tx === x && n.actor.m.ty === y && !n.actor.m.moving);
+    if (npc?.def.sprite === 'biscuit') sound('bleat');
     if (npc?.def.dialogue) {
       const before = npc.actor.m.facing;
       if (npc.def.turns !== false) npc.actor.m.facing = opposite(m.facing);

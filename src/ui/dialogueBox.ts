@@ -2,6 +2,7 @@
  * The dialogue box: HTML over the canvas so text stays sharp. Shows a name
  * plate, a portrait (talking while text types out) and choices.
  */
+import { sound } from '../audio';
 import type { DialogueView } from '../game/dialogue';
 import { ALL_CHARACTERS } from '../sprites/characters';
 import type { Expression } from '../sprites/characters/portraitKit';
@@ -121,6 +122,7 @@ export class DialogueBox {
     if (!this.hasChoices()) return;
     this.selected = (this.selected + delta + this.choices.length) % this.choices.length;
     this.renderChoices();
+    sound('blip');
   }
 
   /** The data index of the highlighted choice. */
