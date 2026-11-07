@@ -49,7 +49,7 @@ export class Rng {
   }
 
   getState(): RngState {
-    return { a: this.a, b: this.b, c: this.c, d: this.d };
+    return { a: this.a >>> 0, b: this.b >>> 0, c: this.c >>> 0, d: this.d >>> 0 };
   }
 
   /** Next unsigned 32-bit integer. */
