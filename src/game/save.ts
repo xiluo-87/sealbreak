@@ -253,7 +253,7 @@ export const ENDINGS_KEY = 'sealbreak.endings.v1';
 
 /** Endings reached in any game, for the title screen. Survives missing or corrupt data. */
 export function endingsFound(storage: StorageLike | null): string[] {
-  let raw: unknown = [];
+  let raw: unknown;
   try {
     raw = JSON.parse(storage?.getItem(ENDINGS_KEY) ?? '[]');
   } catch {
