@@ -7,6 +7,7 @@ import { startLoop } from './game/loop';
 import { Rng } from './game/rng';
 import { Keyboard } from './input/keyboard';
 import { TouchControls } from './input/touch';
+import { installAppIcon } from './render/appIcon';
 import { Screen } from './render/screen';
 import { App } from './ui/app';
 import { DebugOverlay } from './ui/debugOverlay';
@@ -22,6 +23,7 @@ function safeStorage(): Storage | null {
 function startGame(root: HTMLElement): void {
   const options = parseDebugOptions(window.location.search);
   document.body.classList.add('game');
+  installAppIcon();
   const screen = new Screen(root);
   const overlay = new DebugOverlay(root, options.overlay);
   const input = new Keyboard();

@@ -60,7 +60,7 @@ export class EndingScreen {
 
   update(input: Keyboard): void {
     if (this.reader.open) {
-      if (input.wasPressed('confirm') || input.wasPressed('cancel')) this.reader.close();
+      this.reader.update(input);
       return;
     }
     if (input.wasPressed('confirm')) this.next();

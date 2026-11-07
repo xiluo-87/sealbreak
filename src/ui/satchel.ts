@@ -12,6 +12,7 @@ import type { Keyboard } from '../input/keyboard';
 import { assign, breakSeal, canRead, canReseal, carriedBy, reseal, sackFound, stateOf } from '../letters/letters';
 import type { LetterReader } from './letterReader';
 import { ListMenu, type MenuItem } from './menu';
+import { keepInView } from './scroll';
 
 const STATE_LABEL: Record<string, string> = { sealed: 'sealed', opened: 'opened', resealed: 'resealed', delivered: 'delivered' };
 
@@ -92,7 +93,7 @@ export class Satchel {
         this.openActions();
       });
     }
-    this.listEl.querySelector('li.selected')?.scrollIntoView({ block: 'nearest' });
+    keepInView(this.listEl, this.listEl.querySelector<HTMLElement>('li.selected'));
     this.renderDetail(rows[this.selected]);
   }
 
@@ -231,7 +232,7 @@ export class Satchel {
 
   update(input: Keyboard): void {
     if (this.reader.open) {
-      if (input.wasPressed('confirm') || input.wasPressed('cancel')) this.reader.close();
+      this.reader.update(input);
       return;
     }
     if (this.menu) {

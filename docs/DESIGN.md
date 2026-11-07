@@ -423,19 +423,20 @@ Motion should have weight: secondary movement on coat tails, hair and satchels, 
 | Action | Keyboard | Touch |
 |---|---|---|
 | Move | WASD or arrow keys | Left-side floating joystick |
+| Move through a menu, choice or letter | Up and down keys | Up and down buttons on the left (hold to repeat) |
 | Confirm or talk | Enter, Space or Z | Tap the action button |
-| Cancel or menu | Esc or X | Menu button |
+| Cancel or menu | Esc or X | Menu button in the field, Back button in menus and battle |
 | Run | Hold Shift | Run toggle |
 
 Movement is tile-based at 5 tiles per second, because encounters are counted in steps.
 
-On phones the game plays in landscape. In portrait it asks the player to turn the phone, and offers full screen where the browser allows it. Menus, dialogue and letters can be tapped directly.
+On phones the game plays in landscape. In portrait it asks the player to turn the phone, and offers full screen where the browser allows it. Safari on iPhone does not let a page go full screen, so there the title screen and the turn-your-phone screen suggest Share, then Add to Home Screen: opened from the Home Screen, the game runs as an app with no browser bars, under an envelope icon drawn in code at startup. The tip is not shown once the game runs that way. Where the browser does allow it, full screen is also in Options; it is not saved, because the browser decides when it ends. The on-screen buttons change with what is on screen: joystick, Run, Talk and the menu button in the field; up, down, OK and Back in menus and battle; OK in dialogue, with up and down while a choice is waiting. Menus, dialogue and letters can also be tapped directly. A menu taller than the screen scrolls, by finger, mouse wheel or by moving the highlight, and its title stays in place.
 
 **Screens:** title, naming the Rookie, field, dialogue, satchel, letter reader, road map, camp, shop, battle, game over, ending, and credits.
 
 **Saving:** autosave on entering a town or arriving on a new day, plus 3 manual slots. Saves can only be made outside battle.
 
-Accessibility options: text speed, reduced motion, larger text, and encounter rate (normal or low).
+Accessibility options: text speed, reduced motion, larger text, and encounter rate (normal or low). Options also holds sound, volume and, where the browser allows it, full screen.
 
 ## 16. Out of scope for version 1
 

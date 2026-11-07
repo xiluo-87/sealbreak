@@ -1,15 +1,21 @@
 /**
- * On-screen controls for touch screens: a floating joystick on the left,
- * an action button and a run toggle on the right, and a menu button. They
- * press the same logical actions as the keyboard.
+ * On-screen controls for touch screens. Walking about: a floating joystick
+ * on the left, an action button and a run toggle on the right, and a menu
+ * button. In menus, dialogue and battle: up and down on the left, OK and
+ * Back on the right, so every menu works the same way. They press the same
+ * logical actions as the keyboard.
  */
+import { currentAdvice, HOME_SCREEN_TIP, isFullscreen, onFullscreenChange, toggleFullscreen } from '../ui/fullscreen';
 import type { Action, Keyboard } from './keyboard';
 
-/** What the screen is doing, which decides the controls shown. */
-export type TouchMode = 'field' | 'talk' | 'battle' | 'menu';
+/** What the screen is doing, which decides the controls shown. `choice` is dialogue waiting on a choice. */
+export type TouchMode = 'field' | 'talk' | 'choice' | 'battle' | 'menu';
 
 const DEAD_ZONE = 14;
 const RADIUS = 42;
+/** Holding up or down repeats after this long, then at this interval. */
+const REPEAT_DELAY_MS = 400;
+const REPEAT_EVERY_MS = 120;
 /** Touches on these go to the UI, not the joystick. */
 const INTERACTIVE = '.menu, .dialogue, .satchel, .reader, form, button, input, a, .battle-results, .touch-btn, .rotate-hint';
 
@@ -18,10 +24,6 @@ export function stickDirection(dx: number, dy: number, deadZone = DEAD_ZONE): 'u
   if (Math.hypot(dx, dy) < deadZone) return null;
   if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
   return dy > 0 ? 'down' : 'up';
-}
-
-interface OrientationLock {
-  lock?: (orientation: string) => Promise<void>;
 }
 
 export class TouchControls {
@@ -49,6 +51,9 @@ export class TouchControls {
       <button type="button" class="touch-btn touch-full" aria-label="Full screen">⛶</button>
       <button type="button" class="touch-btn touch-run" aria-label="Run" aria-pressed="false">Run</button>
       <button type="button" class="touch-btn touch-action" aria-label="Action">OK</button>
+      <button type="button" class="touch-btn touch-back" aria-label="Back">Back</button>
+      <button type="button" class="touch-btn touch-nav touch-up" aria-label="Up"><i></i></button>
+      <button type="button" class="touch-btn touch-nav touch-down" aria-label="Down"><i></i></button>
       <div class="rotate-hint"><div class="phone-icon"></div><p>Turn your phone sideways to play.</p><button type="button" class="rotate-full">Play full screen</button></div>`;
     parent.appendChild(this.el);
     this.base = this.el.querySelector('.stick-base') as HTMLDivElement;
@@ -58,14 +63,24 @@ export class TouchControls {
 
     this.hold(this.actionBtn, 'confirm');
     this.hold(this.el.querySelector('.touch-menu') as HTMLButtonElement, 'cancel');
+    this.hold(this.el.querySelector('.touch-back') as HTMLButtonElement, 'cancel');
+    this.hold(this.el.querySelector('.touch-up') as HTMLButtonElement, 'up', true);
+    this.hold(this.el.querySelector('.touch-down') as HTMLButtonElement, 'down', true);
     this.runBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this.setRunning(!this.running);
     });
-    const canFull = typeof document.documentElement.requestFullscreen === 'function' && document.fullscreenEnabled;
+    const advice = currentAdvice();
     for (const b of Array.from(this.el.querySelectorAll<HTMLButtonElement>('.touch-full, .rotate-full'))) {
-      if (!canFull) b.remove();
-      else b.addEventListener('click', () => void this.fullScreen());
+      if (advice !== 'button') b.remove();
+      else b.addEventListener('click', () => void toggleFullscreen());
+    }
+    // Safari on iPhone can't go full screen from a page; the Home Screen can.
+    if (advice === 'home-screen') {
+      const tip = document.createElement('p');
+      tip.className = 'rotate-tip';
+      tip.textContent = HOME_SCREEN_TIP;
+      this.el.querySelector('.rotate-hint')?.appendChild(tip);
     }
     this.el.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -74,7 +89,7 @@ export class TouchControls {
     window.addEventListener('pointermove', (e) => this.onMove(e), { passive: false });
     window.addEventListener('pointerup', (e) => this.onUp(e));
     window.addEventListener('pointercancel', (e) => this.onUp(e));
-    document.addEventListener('fullscreenchange', () => document.body.classList.toggle('fullscreen', !!document.fullscreenElement));
+    onFullscreenChange(() => document.body.classList.toggle('fullscreen', isFullscreen()));
   }
 
   /** Shows the controls; called on a coarse pointer or the first touch. */
@@ -93,17 +108,31 @@ export class TouchControls {
     this.mode = mode;
     this.el.dataset.mode = mode;
     this.actionBtn.textContent = mode === 'field' ? 'Talk' : 'OK';
-    if (mode !== 'field' && mode !== 'talk') this.releaseStick();
+    if (mode !== 'field' && mode !== 'talk' && mode !== 'choice') this.releaseStick();
   }
 
-  private hold(btn: HTMLButtonElement, action: Action): void {
+  /** Presses `action` while the button is held. With `repeat`, a long hold presses it again and again, to run down a list. */
+  private hold(btn: HTMLButtonElement, action: Action, repeat = false): void {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const stopRepeat = (): void => {
+      if (timer !== null) clearTimeout(timer);
+      timer = null;
+    };
+    const again = (): void => {
+      this.input.up(action);
+      this.input.down(action);
+      timer = setTimeout(again, REPEAT_EVERY_MS);
+    };
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       btn.setPointerCapture?.(e.pointerId);
       btn.classList.add('down');
       this.input.down(action);
+      stopRepeat();
+      if (repeat) timer = setTimeout(again, REPEAT_DELAY_MS);
     });
     const release = (): void => {
+      stopRepeat();
       btn.classList.remove('down');
       this.input.up(action);
     };
@@ -124,7 +153,7 @@ export class TouchControls {
     if (e.pointerType === 'mouse') return;
     if (!this.enabled) this.enable();
     if (this.stickId !== null) return;
-    if (this.mode !== 'field' && this.mode !== 'talk') return;
+    if (this.mode !== 'field' && this.mode !== 'talk' && this.mode !== 'choice') return;
     const target = e.target instanceof Element ? e.target : null;
     if (target?.closest(INTERACTIVE)) return;
     if (e.clientX > window.innerWidth * 0.55) return;
@@ -172,17 +201,5 @@ export class TouchControls {
     if (this.dir) this.input.up(this.dir);
     this.dir = dir;
     if (dir) this.input.down(dir);
-  }
-
-  private async fullScreen(): Promise<void> {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else {
-        await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-        await (screen.orientation as unknown as OrientationLock).lock?.('landscape');
-      }
-    } catch {
-      // Not every browser allows full screen or an orientation lock; the game works without them.
-    }
   }
 }

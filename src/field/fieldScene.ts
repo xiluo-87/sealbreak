@@ -616,6 +616,11 @@ export class FieldScene implements Scene {
     return this.dialogue !== null || this.cutscene !== null;
   }
 
+  /** True while the dialogue is waiting for the player to pick a choice. */
+  get choosing(): boolean {
+    return this.dialogue !== null && this.box.hasChoices();
+  }
+
   debugInfo(): Record<string, string | number> {
     const m = this.player.m;
     return {

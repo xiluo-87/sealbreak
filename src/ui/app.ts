@@ -42,6 +42,7 @@ import { ListMenu, type MenuItem } from './menu';
 import type { TouchMode } from '../input/touch';
 import { Satchel } from './satchel';
 import { Toast } from './toast';
+import { canFullscreen, currentAdvice, HOME_SCREEN_TIP, isFullscreen, toggleFullscreen } from './fullscreen';
 
 /** Where `?region=` starts. More regions arrive with Milestone 6. */
 const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facing'>> = {
@@ -214,7 +215,7 @@ export class App {
       return;
     }
     if (this.reader.open) {
-      if (ctx.input.wasPressed('confirm') || ctx.input.wasPressed('cancel')) this.reader.close();
+      this.reader.update(ctx.input);
       return;
     }
     if (this.form) {
@@ -257,6 +258,13 @@ export class App {
       e.className = 'endings-found';
       e.textContent = `Endings found: ${found.length} of 4`;
       this.titleEl.append(e);
+    }
+    // Safari on iPhone keeps its bars on screen; the Home Screen version doesn't.
+    if (currentAdvice() === 'home-screen') {
+      const tip = document.createElement('small');
+      tip.className = 'screen-tip';
+      tip.textContent = HOME_SCREEN_TIP;
+      this.titleEl.append(tip);
     }
     this.ui.appendChild(this.titleEl);
     const latest = latestSlot(this.storage);
@@ -561,8 +569,22 @@ export class App {
         disabled: s.muted,
         action: change(5, () => (s.volume = [0.2, 0.4, 0.6, 0.8, 1].find((v) => v > s.volume + 0.01) ?? 0.2)),
       },
-      { label: 'Back', action: back },
     ];
+    // Full screen is the browser's to keep, so it is offered where it works but not saved.
+    if (canFullscreen()) {
+      const at = items.length;
+      items.push({
+        label: `Full screen: ${onOff(isFullscreen())}`,
+        detail: 'Hide the browser’s tabs and bars',
+        action: () => {
+          const menu = this.menu;
+          void toggleFullscreen().then(() => {
+            if (this.menu === menu) this.showOptions(back, at);
+          });
+        },
+      });
+    }
+    items.push({ label: 'Back', action: back });
     this.menu = new ListMenu(this.ui, 'Options', items, back, 'menu options-menu');
     this.menu.select(at);
   }
@@ -781,7 +803,7 @@ export class App {
   touchMode(): TouchMode {
     if (this.satchel || this.reader.open || this.menu || this.form || this.titleEl) return 'menu';
     if (this.scene instanceof BattleScene) return 'battle';
-    if (this.field && this.scene === this.field) return this.field.busy ? 'talk' : 'field';
+    if (this.field && this.scene === this.field) return this.field.choosing ? 'choice' : this.field.busy ? 'talk' : 'field';
     return 'menu';
   }
 

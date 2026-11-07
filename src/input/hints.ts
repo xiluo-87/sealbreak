@@ -15,9 +15,9 @@ const KEYS: Record<HintKind, string> = {
 
 const TOUCH: Record<HintKind, string> = {
   confirm: 'Tap',
-  cancel: 'Menu button to go back',
+  cancel: 'Back button to go back',
   satchel: 'Tap the menu button and open the satchel',
-  'auto-off': 'Tap the menu button to take over',
+  'auto-off': 'Tap Back to take over',
 };
 
 export function hint(kind: HintKind): string {

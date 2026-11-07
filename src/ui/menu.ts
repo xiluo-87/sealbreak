@@ -1,6 +1,7 @@
 /** A keyboard- and pointer-driven list menu, used by the title screen and the pause menu. */
 import { sound } from '../audio';
 import type { Keyboard } from '../input/keyboard';
+import { keepInView } from './scroll';
 
 export interface MenuItem {
   label: string;
@@ -30,10 +31,14 @@ export class ListMenu {
       h.textContent = title;
       this.el.appendChild(h);
     }
+    // The list scrolls on its own when it is taller than the screen, so the title stays put.
     this.list = document.createElement('ol');
     this.list.setAttribute('role', 'menu');
+    // Rows per column when a menu is laid out in two columns (battle commands on touch screens).
+    this.list.style.setProperty('--half', String(Math.max(1, Math.ceil(this.items.length / 2))));
     this.el.appendChild(this.list);
     parent.appendChild(this.el);
+    this.build();
     this.selected = Math.max(0, this.items.findIndex((i) => !i.disabled));
     this.render();
     this.onHighlight?.(this.selected);
@@ -46,12 +51,16 @@ export class ListMenu {
     this.render();
   }
 
-  private render(): void {
+  /** Makes the rows once. Moving the highlight only changes classes, so taps and scrolling are not disturbed. */
+  private build(): void {
     this.list.replaceChildren();
     this.items.forEach((item, i) => {
       const li = document.createElement('li');
       li.setAttribute('role', 'menuitem');
-      li.className = `${i === this.selected ? 'selected' : ''} ${item.disabled ? 'disabled' : ''}`.trim();
+      if (item.disabled) {
+        li.classList.add('disabled');
+        li.setAttribute('aria-disabled', 'true');
+      }
       const label = document.createElement('span');
       label.textContent = item.label;
       li.appendChild(label);
@@ -60,21 +69,32 @@ export class ListMenu {
         d.textContent = item.detail;
         li.appendChild(d);
       }
-      li.addEventListener('pointerenter', () => {
-        if (!item.disabled && this.selected !== i) {
-          this.selected = i;
-          this.render();
-          this.onHighlight?.(i);
-        }
+      li.addEventListener('pointerenter', (e) => {
+        // Only a mouse highlights on hover; a finger sliding to scroll should not.
+        if (e.pointerType !== 'mouse' || item.disabled || this.selected === i) return;
+        this.selected = i;
+        this.render(false);
+        this.onHighlight?.(i);
       });
       li.addEventListener('click', () => {
-        if (!item.disabled) {
-          sound('select');
-          item.action();
+        if (item.disabled) return;
+        if (this.selected !== i) {
+          this.selected = i;
+          this.render(false);
+          this.onHighlight?.(i);
         }
+        sound('select');
+        item.action();
       });
       this.list.appendChild(li);
     });
+  }
+
+  /** Marks the highlighted row and, unless the pointer moved it, scrolls it into view. */
+  private render(scroll = true): void {
+    const rows = this.list.children;
+    for (let i = 0; i < rows.length; i++) rows[i]?.classList.toggle('selected', i === this.selected);
+    if (scroll) keepInView(this.list, rows[this.selected] as HTMLElement | undefined);
   }
 
   private move(delta: number): void {

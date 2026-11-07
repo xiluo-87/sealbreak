@@ -8,6 +8,7 @@ import type { DialogueView } from '../game/dialogue';
 import { ALL_CHARACTERS } from '../sprites/characters';
 import type { Expression } from '../sprites/characters/portraitKit';
 import { drawFrame, getSheet, type SpriteSheet } from '../sprites/sheet';
+import { keepInView } from './scroll';
 
 export interface SpeakerInfo {
   name: string;
@@ -184,5 +185,6 @@ export class DialogueBox {
       if (i === this.selected) li.className = 'selected';
       this.choicesEl.appendChild(li);
     });
+    keepInView(this.choicesEl, this.choicesEl.children[this.selected] as HTMLElement | undefined);
   }
 }
