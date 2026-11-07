@@ -17,6 +17,7 @@ import type { Keyboard } from '../input/keyboard';
 import type { Scene, SceneContext } from '../game/scene';
 import { Rng } from '../game/rng';
 import type { GameState } from '../game/state';
+import { type BurstKind, Particles } from '../render/particles';
 import { backdrop } from '../render/backdrop';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { frameAt } from '../sprites/anim';
@@ -133,6 +134,7 @@ export class BattleScene implements Scene {
   private readonly visuals = new Map<string, Visual>();
   private biscuitVisual: Visual | null = null;
   private popups: Popup[] = [];
+  private readonly fx = new Particles();
   private queue: BattleEvent[] = [];
   private wait = 0;
   private phase: 'intro' | 'next' | 'command' | 'play' | 'end' | 'done' = 'intro';
@@ -403,6 +405,12 @@ export class BattleScene implements Scene {
     return key === 'biscuit' ? (this.biscuitVisual ?? undefined) : this.visuals.get(key);
   }
 
+  /** A burst of particles on a combatant, unless the player asked for less motion. */
+  private effect(v: Visual | undefined, kind: BurstKind): void {
+    if (!v || settings.reducedMotion) return;
+    this.fx.burst(v.x, v.y - v.fy / 2, kind);
+  }
+
   private popup(key: string, text: string, color: string): void {
     const v = this.visual(key);
     if (!v) return;
@@ -438,6 +446,10 @@ export class BattleScene implements Scene {
         }
         this.message(`${c.name}: ${e.label}`);
         sound(e.anim === 'attack' ? 'swing' : e.anim === 'breakSeal' ? 'wax' : e.anim === 'guard' ? 'blip' : 'swoosh');
+        if (e.anim === 'breakSeal' && v) {
+          this.effect(v, 'wax');
+          this.effect(v, 'paper');
+        }
         this.wait = e.anim === 'attack' ? 260 : e.anim === 'breakSeal' ? 720 : 420;
         break;
       }
@@ -447,7 +459,10 @@ export class BattleScene implements Scene {
           v.anim = 'hit';
           v.t = 0;
         }
-        if (v) v.flash = 1;
+        if (v) {
+          v.flash = 1;
+          this.effect(v, 'hit');
+        }
         sound('hit');
         this.popup(e.target, String(e.amount), '#fff4e0');
         this.wait = 240;
@@ -455,6 +470,7 @@ export class BattleScene implements Scene {
       }
       case 'heal':
         sound('heal');
+        this.effect(this.visual(e.target), 'heal');
         this.popup(e.target, `+${e.amount}`, '#9fe39a');
         this.wait = 240;
         break;
@@ -464,6 +480,7 @@ export class BattleScene implements Scene {
         break;
       case 'status':
         sound('status');
+        this.effect(this.visual(e.target), 'status');
         this.popup(e.target, `${e.ailment[0]?.toUpperCase()}${e.ailment.slice(1)}!`, '#e8b0f0');
         this.wait = 300;
         break;
@@ -538,6 +555,7 @@ export class BattleScene implements Scene {
     this.closeMenu();
     this.autoEl.hidden = true;
     sound(result === 'victory' ? 'victory' : result === 'defeat' ? 'defeat' : result === 'delivered' ? 'chime' : 'swoosh');
+    if (result === 'delivered') for (const v of this.visuals.values()) if (v.alpha > 0 && this.battle.get(v.key).side === 'enemy') this.effect(v, 'chime');
     if (result === 'fled' || result === 'delivered') {
       this.battle.applyResults(this.game);
       this.hooks.onEnd(result, null);
@@ -613,6 +631,7 @@ export class BattleScene implements Scene {
       v.flash = Math.max(0, v.flash - dt / 180);
     }
     for (const p of this.popups) p.t += dt;
+    this.fx.update(dt);
     this.popups = this.popups.filter((p) => p.t < 900);
 
     const input: Keyboard = ctx.input;
@@ -706,6 +725,8 @@ export class BattleScene implements Scene {
       g.fillRect(px - 2, py - 2, 5, 2);
       g.fillRect(px - 1, py, 3, 2);
     }
+
+    this.fx.draw(g);
 
     // Damage numbers.
     g.font = 'bold 12px Georgia, serif';

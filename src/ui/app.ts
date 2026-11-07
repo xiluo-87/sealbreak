@@ -5,6 +5,7 @@
 import { songFor, sound } from '../audio';
 import { saveSettings, settings } from '../game/settings';
 import { applySettings } from './options';
+import { drawAmbient } from '../render/particles';
 import { BattleScene } from '../battle/battleScene';
 import { getEncounter } from '../data/enemies';
 import { ITEMS } from '../data/items';
@@ -116,6 +117,32 @@ class TitleScene implements Scene {
     g.drawImage(this.ground, -x, -Math.round(1.5 * TILE));
     g.fillStyle = 'rgba(20, 16, 30, 0.62)';
     g.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    drawAmbient(g, 'leaves', this.t);
+    if (!settings.reducedMotion) this.envelopes(g);
+  }
+
+  /** A few letters blowing across the square, as if somebody dropped the sack. */
+  private envelopes(g: CanvasRenderingContext2D): void {
+    for (let i = 0; i < 5; i++) {
+      const speed = 0.012 + i * 0.003;
+      const span = LOGICAL_WIDTH + 60;
+      const x = ((this.t * speed + i * 157) % span) - 30;
+      const y = 60 + ((i * 89) % 220) + Math.sin(this.t / 700 + i * 2) * 8;
+      const tilt = Math.sin(this.t / 500 + i) > 0.6 ? 1 : 0;
+      const px = Math.round(x);
+      const py = Math.round(y);
+      g.globalAlpha = 0.85;
+      g.fillStyle = '#e8dcc4';
+      g.fillRect(px, py + tilt, 11, 7);
+      g.fillStyle = '#c8b898';
+      g.fillRect(px, py + tilt, 11, 1);
+      g.fillRect(px + 1, py + tilt + 1, 2, 1);
+      g.fillRect(px + 8, py + tilt + 1, 2, 1);
+      g.fillRect(px + 3, py + tilt + 2, 5, 1);
+      g.fillStyle = '#a3242c';
+      g.fillRect(px + 5, py + tilt + 3, 2, 2);
+      g.globalAlpha = 1;
+    }
   }
 }
 

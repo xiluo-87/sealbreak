@@ -4,6 +4,7 @@
  * keeps what is needed to draw and animate it.
  */
 import { sound } from '../audio';
+import { ambientFor, drawAmbient } from '../render/particles';
 import { CUTSCENES } from '../data/cutscenes';
 import { DIALOGUE } from '../data/dialogue';
 import { MAPS } from '../data/maps';
@@ -562,6 +563,7 @@ export class FieldScene implements Scene {
     items.sort((a, b) => a.y - b.y || a.order - b.order);
     for (const it of items) it.draw();
 
+    if (!settings.reducedMotion) drawAmbient(g, ambientFor(this.map.def.region, this.map.def.theme, this.map.def.kind), this.state.playMs);
     if (this.map.def.kind === 'road' && REGIONS[this.map.def.region]) this.drawBell(g);
 
     if (this.fade > 0) {
