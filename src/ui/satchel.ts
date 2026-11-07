@@ -6,6 +6,7 @@ import { letterSkill } from '../battle/letterSkills';
 import { GRANS_LETTER, LETTERS, type LetterDef } from '../data/letters';
 import { MEMBERS } from '../data/party';
 import type { GameState, PartyId } from '../game/state';
+import { hint, touchMode } from '../input/hints';
 import type { Keyboard } from '../input/keyboard';
 import { assign, breakSeal, canRead, canReseal, carriedBy, reseal, sackFound, stateOf } from '../letters/letters';
 import type { LetterReader } from './letterReader';
@@ -42,7 +43,7 @@ export class Satchel {
   ) {
     this.el = document.createElement('div');
     this.el.className = 'satchel';
-    this.el.innerHTML = `<header><h2>Satchel</h2><div class="heat"></div></header><div class="satchel-cols"><ol class="letter-list"></ol><div class="letter-detail"></div></div><footer>Enter for actions · Esc to go back</footer>`;
+    this.el.innerHTML = `<header><h2>Satchel</h2><div class="heat"></div></header><div class="satchel-cols"><ol class="letter-list"></ol><div class="letter-detail"></div></div><footer>${touchMode() ? 'Tap a letter for actions' : 'Enter for actions'} · ${hint('cancel')}</footer>`;
     this.listEl = this.el.querySelector('.letter-list') as HTMLOListElement;
     this.detailEl = this.el.querySelector('.letter-detail') as HTMLDivElement;
     this.heatEl = this.el.querySelector('.heat') as HTMLDivElement;

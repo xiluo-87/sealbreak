@@ -1,4 +1,4 @@
-/** Keyboard state. Logical actions are mapped from physical keys. */
+/** Input state. Logical actions are mapped from physical keys, and on-screen touch controls press them too. */
 export type Action = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'cancel' | 'run' | 'debug';
 
 const KEY_MAP: Record<string, Action> = {
@@ -38,24 +38,34 @@ export class Keyboard {
       const action = actionForCode(e.code);
       if (!action) return;
       e.preventDefault();
-      if (!this.held.has(action)) this.pressed.add(action);
-      this.held.add(action);
-      if (isDirection(action)) {
-        this.directionOrder = this.directionOrder.filter((a) => a !== action);
-        this.directionOrder.push(action);
-      }
+      this.down(action);
     });
     target.addEventListener('keyup', (e) => {
       if (typing(e)) return;
       const action = actionForCode(e.code);
       if (!action) return;
-      this.held.delete(action);
-      this.directionOrder = this.directionOrder.filter((a) => a !== action);
+      this.up(action);
     });
     target.addEventListener('blur', () => {
       this.held.clear();
       this.directionOrder = [];
     });
+  }
+
+  /** Presses an action, from a key or an on-screen control. */
+  down(action: Action): void {
+    if (!this.held.has(action)) this.pressed.add(action);
+    this.held.add(action);
+    if (isDirection(action)) {
+      this.directionOrder = this.directionOrder.filter((a) => a !== action);
+      this.directionOrder.push(action);
+    }
+  }
+
+  /** Releases an action. */
+  up(action: Action): void {
+    this.held.delete(action);
+    this.directionOrder = this.directionOrder.filter((a) => a !== action);
   }
 
   isHeld(action: Action): boolean {

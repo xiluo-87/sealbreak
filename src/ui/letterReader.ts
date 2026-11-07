@@ -2,6 +2,7 @@
  * The letter reader: a sheet of paper with the envelope's wax, stamp and
  * postmark, in a hand that suits the author.
  */
+import { touchMode } from '../input/hints';
 import type { LetterDef } from '../data/letters';
 
 type Readable = Pick<LetterDef, 'title' | 'from' | 'to' | 'style' | 'postmark' | 'body' | 'signature' | 'hand'>;
@@ -42,7 +43,7 @@ export class LetterReader {
           <div class="wax wax-${seal}"></div>
         </header>
         <div class="body">${paras}<p class="sig">${esc(l.signature)}</p>${l.hand === 'forged' ? CURL : ''}</div>
-        <footer class="reader-hint">Enter to close</footer>
+        <footer class="reader-hint">${touchMode() ? 'Tap to close' : 'Enter to close'}</footer>
       </article>`;
     this.el.hidden = false;
   }

@@ -3,6 +3,7 @@ import { parseDebugOptions } from './game/debugOptions';
 import { startLoop } from './game/loop';
 import { Rng } from './game/rng';
 import { Keyboard } from './input/keyboard';
+import { TouchControls } from './input/touch';
 import { Screen } from './render/screen';
 import { App } from './ui/app';
 import { DebugOverlay } from './ui/debugOverlay';
@@ -14,6 +15,7 @@ function startGame(root: HTMLElement): void {
   const overlay = new DebugOverlay(root, options.overlay);
   const input = new Keyboard();
   input.attach(window);
+  const touch = new TouchControls(root, input);
   const rng = new Rng(options.seed);
   const clock = new FixedStepClock({ speed: options.speed });
   const app = new App(screen.ui, options.seed, options);
@@ -21,6 +23,7 @@ function startGame(root: HTMLElement): void {
 
   startLoop(clock, {
     update() {
+      touch.setMode(app.touchMode());
       if (input.wasPressed('debug')) overlay.toggle();
       app.update(ctx);
       input.endStep();
@@ -32,7 +35,7 @@ function startGame(root: HTMLElement): void {
       overlay.frame(now, {
         steps: clock.steps,
         speed: `${clock.speed}x`,
-        scale: `${screen.current.scale}x (${window.devicePixelRatio || 1} dpr)`,
+        scale: `${screen.current.integer ? screen.current.scale : screen.current.scale.toFixed(2)}x (${window.devicePixelRatio || 1} dpr)`,
         seed: options.seed,
         ...app.debugInfo(),
       });

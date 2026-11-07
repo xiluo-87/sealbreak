@@ -355,7 +355,7 @@ Each ending also shows a short epilogue for every recipient reached and every pa
 
 ### 13.1 Sizes
 
-The game renders at a logical 640×360, scaled up by whole numbers.
+The game renders at a logical 640×360, scaled up by whole numbers. When whole numbers would leave much of the screen empty, as on a phone with the browser's bars showing, it scales to fit instead. Menu and dialogue text never shrinks below a readable size.
 
 | Sprite | Size | Frames |
 |---|---|---|
@@ -421,6 +421,8 @@ Motion should have weight: secondary movement on coat tails, hair and satchels, 
 | Run | Hold Shift | Run toggle |
 
 Movement is tile-based at 5 tiles per second, because encounters are counted in steps.
+
+On phones the game plays in landscape. In portrait it asks the player to turn the phone, and offers full screen where the browser allows it. Menus, dialogue and letters can be tapped directly.
 
 **Screens:** title, naming the Rookie, field, dialogue, satchel, letter reader, road map, camp, shop, battle, game over, ending, and credits.
 

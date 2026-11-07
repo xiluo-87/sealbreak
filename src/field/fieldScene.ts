@@ -13,6 +13,7 @@ import { type Dialogue, DialogueRun, fillText } from '../game/dialogue';
 import type { Scene, SceneContext } from '../game/scene';
 import type { GameState } from '../game/state';
 import { deliveryNotice } from '../letters/letters';
+import { hint } from '../input/hints';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { paintGround, tallSpriteFor } from '../render/tileArt';
 import { DialogueBox, type SpeakerInfo } from '../ui/dialogueBox';
@@ -247,7 +248,7 @@ export class FieldScene implements Scene {
       if (this.map.def.kind === 'town') this.hooks.autosave(this.state);
       if (this.state.flags['intro.done'] && !this.state.flags['hint.satchel']) {
         this.state.flags['hint.satchel'] = true;
-        this.hooks.notify('The sack is yours now. Press Esc and open the satchel to sort your letters.');
+        this.hooks.notify(`The sack is yours now. ${hint('satchel')} to sort your letters.`);
       }
       return;
     }
@@ -463,6 +464,11 @@ export class FieldScene implements Scene {
       g.fillStyle = `rgba(14, 12, 20, ${this.fade.toFixed(3)})`;
       g.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
     }
+  }
+
+  /** True while a dialogue or cutscene is running. */
+  get busy(): boolean {
+    return this.dialogue !== null || this.cutscene !== null;
   }
 
   debugInfo(): Record<string, string | number> {

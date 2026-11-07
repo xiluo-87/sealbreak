@@ -8,7 +8,7 @@ export class Screen {
   /** Sits exactly over the canvas; HTML UI goes in here. `--u` is one logical pixel in CSS px. */
   readonly ui: HTMLDivElement;
   private readonly frame: HTMLDivElement;
-  current: ScaleResult = { scale: 1, cssWidth: LOGICAL_WIDTH, cssHeight: LOGICAL_HEIGHT };
+  current: ScaleResult = { scale: 1, integer: true, cssWidth: LOGICAL_WIDTH, cssHeight: LOGICAL_HEIGHT };
 
   constructor(parent: HTMLElement) {
     this.host = document.createElement('div');
@@ -31,6 +31,8 @@ export class Screen {
     this.ctx.imageSmoothingEnabled = false;
     this.resize();
     window.addEventListener('resize', () => this.resize());
+    window.visualViewport?.addEventListener('resize', () => this.resize());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 250));
   }
 
   resize(): void {
@@ -43,5 +45,6 @@ export class Screen {
     this.frame.style.width = `${this.current.cssWidth}px`;
     this.frame.style.height = `${this.current.cssHeight}px`;
     this.frame.style.setProperty('--u', `${this.current.cssWidth / LOGICAL_WIDTH}px`);
+    this.canvas.classList.toggle('fractional', !this.current.integer);
   }
 }

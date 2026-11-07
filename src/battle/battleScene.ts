@@ -3,6 +3,7 @@
  * forecast on the canvas; menus, the party panel and messages are HTML over
  * it. All rules live in Battle; this only chooses actions and plays events.
  */
+import { hint } from '../input/hints';
 import { BALANCE } from '../data/balance';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
@@ -61,9 +62,10 @@ const PARTY_SLOTS: [number, number][] = [
   [552, 340],
 ];
 const ENEMY_SLOTS: [number, number][] = [
-  [262, 270],
-  [196, 236],
-  [196, 316],
+  [346, 266],
+  [292, 226],
+  [292, 320],
+  [404, 320],
 ];
 const BISCUIT_SLOT: [number, number] = [604, 322];
 
@@ -191,7 +193,7 @@ export class BattleScene implements Scene {
     this.autoEl = document.createElement('div');
     this.autoEl.className = 'battle-auto';
     this.autoEl.hidden = true;
-    this.autoEl.textContent = 'Auto-battle on. Esc or X to take over.';
+    this.autoEl.textContent = `Auto-battle on. ${hint('auto-off')}.`;
     this.el.append(this.msgEl, this.panelEl, this.autoEl);
     ui.appendChild(this.el);
     this.message(this.tutorial ? 'Rats! Attack them, or use the letter you carry with Letter.' : `${enemies.map((e) => e.name).join(', ')}!`);
@@ -255,7 +257,7 @@ export class BattleScene implements Scene {
       { label: 'Run', weight: 'normal', disabled: !this.battle.encounter.escapable, detail: this.battle.encounter.escapable ? `${Math.round(this.battle.runChance() * 100)}%` : 'Can’t run', action: () => this.choose({ kind: 'run' }) },
       { label: 'Auto', detail: 'Basic attacks and heals', action: () => this.setAuto(true) },
     ];
-    this.menu = new ListMenu(this.el, c.name, items, undefined, 'menu battle-menu', (i) => {
+    this.menu = new ListMenu(this.el, c.name, items, undefined, 'menu battle-menu battle-commands', (i) => {
       this.preview = items[i]?.weight;
     });
   }
@@ -346,6 +348,7 @@ export class BattleScene implements Scene {
   private setAuto(on: boolean): void {
     this.auto = on;
     this.autoEl.hidden = !on;
+    this.autoEl.textContent = `Auto-battle on. ${hint('auto-off')}.`;
     if (on && this.phase === 'command') {
       this.closeMenu();
       this.phase = 'next';
@@ -524,7 +527,7 @@ export class BattleScene implements Scene {
       const c = this.battle.get(up.id);
       lines.push(`<p class="levelup">${c.name} reached level ${up.level}!</p>`);
     }
-    lines.push('<p class="hint">Press Enter to continue</p>');
+    lines.push(`<p class="hint">${hint('confirm')} to continue</p>`);
     this.resultEl = document.createElement('div');
     this.resultEl.className = 'menu battle-results';
     this.resultEl.innerHTML = lines.join('');

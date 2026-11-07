@@ -23,6 +23,7 @@ import { LETTER_BY_ID } from '../data/letters';
 import { equip } from '../letters/letters';
 import { LetterReader } from './letterReader';
 import { ListMenu, type MenuItem } from './menu';
+import type { TouchMode } from '../input/touch';
 import { Satchel } from './satchel';
 import { Toast } from './toast';
 
@@ -400,6 +401,14 @@ export class App {
       return { label: slotLabel(id), detail: slotDetail(s), disabled: !s, action: () => s && this.startField(s) };
     });
     this.menu = new ListMenu(this.ui, 'Load', items, back);
+  }
+
+  /** What the screen is doing, for the touch controls. */
+  touchMode(): TouchMode {
+    if (this.satchel || this.reader.open || this.menu || this.form || this.titleEl) return 'menu';
+    if (this.scene instanceof BattleScene) return 'battle';
+    if (this.field && this.scene === this.field) return this.field.busy ? 'talk' : 'field';
+    return 'menu';
   }
 
   debugInfo(): Record<string, string | number> {
