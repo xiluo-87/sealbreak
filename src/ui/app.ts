@@ -3,7 +3,7 @@
  * the field, the pause menu and save slots.
  */
 import { BattleScene } from '../battle/battleScene';
-import { ENCOUNTERS } from '../data/enemies';
+import { getEncounter } from '../data/enemies';
 import { ITEMS } from '../data/items';
 import { MAPS } from '../data/maps';
 import { MEMBERS } from '../data/party';
@@ -21,6 +21,8 @@ import { paintGround } from '../render/tileArt';
 import { ACCESSORIES } from '../data/accessories';
 import { LETTER_BY_ID } from '../data/letters';
 import { equip } from '../letters/letters';
+import { ringBell } from '../game/encounters';
+import { applyAll } from '../game/conditions';
 import { LetterReader } from './letterReader';
 import { ListMenu, type MenuItem } from './menu';
 import type { TouchMode } from '../input/touch';
@@ -30,7 +32,7 @@ import { Toast } from './toast';
 /** Where `?region=` starts. More regions arrive with Milestone 6. */
 const REGION_STARTS: Record<string, Pick<GameState, 'mapId' | 'x' | 'y' | 'facing'>> = {
   thistle: { mapId: 'thistle-cross', x: 19, y: 9, facing: 'down' },
-  'thistle-road': { mapId: 'thistle-road', x: 2, y: 6, facing: 'right' },
+  'thistle-road': { mapId: 'thistle-road', x: 2, y: 5, facing: 'right' },
 };
 
 function playTime(ms: number): string {
@@ -87,7 +89,7 @@ export class App {
     this.toast = new Toast(ui);
     this.reader = new LetterReader(ui);
     this.scene = new TitleScene();
-    if (debug.battle && ENCOUNTERS[debug.battle]) this.debugBattle(debug.battle, debug.level ?? 1, debug.heat ?? 0);
+    if (debug.battle && getEncounter(debug.battle)) this.debugBattle(debug.battle, debug.level ?? 1, debug.heat ?? 0);
     else if (debug.region && REGION_STARTS[debug.region]) this.startField(this.debugState(debug.region, debug.level ?? 1, debug.heat ?? 0));
     else this.showTitle();
   }
@@ -114,7 +116,7 @@ export class App {
     s.flags['road.seen'] = true;
     s.x = 4;
     this.startField(s);
-    this.startBattle(encounter, () => undefined);
+    this.field?.fight(encounter);
   }
 
   /** Called every fixed step. Menus take input before the scene does. */
@@ -213,10 +215,10 @@ export class App {
     this.scene = field;
   }
 
-  private startBattle(encounter: string, done: (result: 'victory' | 'fled') => void): void {
+  private startBattle(encounter: string, done: (result: 'victory' | 'fled' | 'delivered', delivered: string | null) => void): void {
     const field = this.field;
     if (!field) return;
-    const enc = ENCOUNTERS[encounter];
+    const enc = getEncounter(encounter);
     const battle = new BattleScene(field.state, encounter, this.ui, {
       onEnd: (result) => {
         battle.destroy();
@@ -231,7 +233,7 @@ export class App {
         const next = (): void => {
           const l = opened.shift();
           if (!l) {
-            done(result);
+            done(result, battle.battle.delivered);
             return;
           }
           this.reader.show(l, 'broken', next, 'The seal broke in the fight. The letter reads:');
@@ -342,14 +344,45 @@ export class App {
   /** Use healing items outside battle. */
   private showItems(state: GameState): void {
     this.clearUi();
-    const usable = Object.entries(state.items).filter(([id, n]) => n > 0 && ITEMS[id]?.battle);
+    const usable = Object.entries(state.items).filter(([id, n]) => n > 0 && ITEMS[id]);
     const items: MenuItem[] = usable.map(([id, n]) => ({
       label: `${ITEMS[id]?.name ?? id} ×${n}`,
       detail: ITEMS[id]?.description ?? '',
-      action: () => this.showItemTarget(state, id),
+      action: () => {
+        if (id === 'repel-bell') this.ringRepelBell(state);
+        else if (id === 'apple') this.feedBiscuit(state);
+        else this.showItemTarget(state, id);
+      },
     }));
     if (items.length === 0) items.push({ label: 'Nothing to use', disabled: true, action: () => undefined });
     this.menu = new ListMenu(this.ui, this.partySummary(state), items, () => this.showParty(state));
+  }
+
+  private useUp(state: GameState, itemId: string): void {
+    const left = (state.items[itemId] ?? 0) - 1;
+    state.items = Object.fromEntries(Object.entries({ ...state.items, [itemId]: left }).filter(([, v]) => v > 0));
+  }
+
+  private ringRepelBell(state: GameState): void {
+    if (MAPS[state.mapId]?.kind !== 'road') {
+      this.toast.show('Nothing out here to scare off.');
+      return;
+    }
+    ringBell(state.road);
+    this.useUp(state, 'repel-bell');
+    this.toast.show('You ring the bell. The road goes quiet.', 2600);
+    this.showItems(state);
+  }
+
+  private feedBiscuit(state: GameState): void {
+    if (!state.flags['biscuit.joined']) {
+      this.toast.show('You save the apple for later.');
+      return;
+    }
+    this.useUp(state, 'apple');
+    applyAll([{ add: 'biscuit.trust', by: 1 }], state);
+    this.toast.show('Biscuit eats the apple, core and all, and looks at you differently.', 3000);
+    this.showItems(state);
   }
 
   private showItemTarget(state: GameState, itemId: string): void {

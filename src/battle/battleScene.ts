@@ -24,10 +24,10 @@ import { resolveBones } from '../sprites/rig';
 import { drawFrame, getSheet, type SpriteSheet } from '../sprites/sheet';
 import type { SpriteSetDef } from '../sprites/types';
 import { ListMenu, type MenuItem } from '../ui/menu';
-import { type Action, Battle, type BattleEvent, type Combatant, type Results } from './battle';
+import { type Action, Battle, type BattleEvent, type BattleResult, type Combatant, type Results } from './battle';
 
 export interface BattleHooks {
-  onEnd(result: 'victory' | 'defeat' | 'fled', results: Results | null): void;
+  onEnd(result: BattleResult, results: Results | null): void;
 }
 
 interface Visual {
@@ -161,22 +161,7 @@ export class BattleScene implements Scene {
     this.battle = new Battle(game, encounterId, seed);
     this.tutorial = encounterId === 'sorting-rats';
 
-    const party = this.battle.combatants.filter((c) => c.side === 'party');
-    const enemies = this.battle.combatants.filter((c) => c.side === 'enemy');
-    party.forEach((c, i) => {
-      const set = setById(`${c.id}-battle`);
-      const [fx, fy] = rootOf(set);
-      const [x, y] = PARTY_SLOTS[i] ?? [520, 300];
-      const field = fieldSets(c.id).down;
-      this.visuals.set(c.key, { key: c.key, sheet: getSheet(set), x, y, fx, fy, anim: c.ko ? 'knockedOut' : 'idle', t: c.ko ? 9999 : i * 90, lunge: 0, flash: 0, alpha: 1, icon: iconFrom(field, 'head') });
-    });
-    enemies.forEach((c, i) => {
-      const def = ENEMIES[c.id];
-      const set = setById(`${def?.sprite ?? c.id}-battle`);
-      const [fx, fy] = rootOf(set);
-      const [x, y] = ENEMY_SLOTS[i] ?? [140, 280];
-      this.visuals.set(c.key, { key: c.key, sheet: getSheet(set), x, y, fx, fy, anim: 'idle', t: i * 130, lunge: 0, flash: 0, alpha: 1, icon: iconFrom(set, 'head', 0) });
-    });
+    for (const c of this.battle.combatants) this.addVisual(c);
     if (this.battle.biscuit) {
       const set = setById('biscuit-battle');
       const [fx, fy] = rootOf(set);
@@ -196,7 +181,7 @@ export class BattleScene implements Scene {
     this.autoEl.textContent = `Auto-battle on. ${hint('auto-off')}.`;
     this.el.append(this.msgEl, this.panelEl, this.autoEl);
     ui.appendChild(this.el);
-    this.message(this.tutorial ? 'Rats! Attack them, or use the letter you carry with Letter.' : `${enemies.map((e) => e.name).join(', ')}!`);
+    this.message(this.tutorial ? 'Rats! Attack them, or use the letter you carry with Letter.' : `${this.battle.combatants.filter((c) => c.side === 'enemy').map((e) => e.name).join(', ')}!`);
     this.renderPanel();
   }
 
@@ -252,6 +237,7 @@ export class BattleScene implements Scene {
         action: () => this.showLetters('carry'),
       },
       { label: 'Break the Seal', weight: 'normal', disabled: c.letters.length === 0, action: () => this.showLetters('burst') },
+      ...(this.battle.deliverOptions().length > 0 ? [{ label: 'Deliver', detail: 'Hand over their letter', action: () => this.showDeliver() }] : []),
       { label: 'Guard', weight: 'light', action: () => this.choose({ kind: 'guard' }) },
       { label: 'Item', disabled: !Object.entries(this.game.items).some(([id, n]) => n > 0 && ITEMS[id]?.battle), action: () => this.showItems() },
       { label: 'Run', weight: 'normal', disabled: !this.battle.encounter.escapable, detail: this.battle.encounter.escapable ? `${Math.round(this.battle.runChance() * 100)}%` : 'Can’t run', action: () => this.choose({ kind: 'run' }) },
@@ -260,6 +246,17 @@ export class BattleScene implements Scene {
     this.menu = new ListMenu(this.el, c.name, items, undefined, 'menu battle-menu battle-commands', (i) => {
       this.preview = items[i]?.weight;
     });
+  }
+
+  private showDeliver(): void {
+    this.closeMenu();
+    const opts = this.battle.deliverOptions();
+    const items: MenuItem[] = opts.map((o) => ({
+      label: `“${LETTER_BY_ID[o.letter]?.title ?? o.letter}”`,
+      detail: `To ${this.battle.get(o.target).name}`,
+      action: () => this.choose({ kind: 'deliver', letter: o.letter, target: o.target }),
+    }));
+    this.menu = new ListMenu(this.el, 'Deliver', items, () => this.showCommands(), 'menu battle-menu');
   }
 
   private showSkills(): void {
@@ -382,6 +379,24 @@ export class BattleScene implements Scene {
     } else this.showCommands();
   }
 
+  /** Places a combatant in the next free slot on its side. */
+  private addVisual(c: Combatant): void {
+    const i = [...this.visuals.keys()].filter((k) => this.battle.get(k).side === c.side).length;
+    if (c.side === 'party') {
+      const set = setById(`${c.id}-battle`);
+      const [fx, fy] = rootOf(set);
+      const [x, y] = PARTY_SLOTS[i] ?? [520, 300];
+      const field = fieldSets(c.id).down;
+      this.visuals.set(c.key, { key: c.key, sheet: getSheet(set), x, y, fx, fy, anim: c.ko ? 'knockedOut' : 'idle', t: c.ko ? 9999 : i * 90, lunge: 0, flash: 0, alpha: 1, icon: iconFrom(field, 'head') });
+      return;
+    }
+    const def = ENEMIES[c.id];
+    const set = setById(`${def?.sprite ?? c.id}-battle`);
+    const [fx, fy] = rootOf(set);
+    const [x, y] = ENEMY_SLOTS[i] ?? [ENEMY_SLOTS[i % ENEMY_SLOTS.length]?.[0] ?? 300, 280];
+    this.visuals.set(c.key, { key: c.key, sheet: getSheet(set), x, y, fx, fy, anim: 'idle', t: i * 130, lunge: 0, flash: 0, alpha: 1, icon: iconFrom(set, 'head', 0) });
+  }
+
   private visual(key: string): Visual | undefined {
     return key === 'biscuit' ? (this.biscuitVisual ?? undefined) : this.visuals.get(key);
   }
@@ -485,6 +500,20 @@ export class BattleScene implements Scene {
         this.wait = 380;
         break;
       }
+      case 'join': {
+        const c = this.battle.get(e.target);
+        if (!this.visuals.has(c.key)) this.addVisual(c);
+        this.popup(e.target, c.side === 'party' ? 'Joins!' : 'Arrives!', '#f0d890');
+        this.wait = 420;
+        break;
+      }
+      case 'escape': {
+        const v = this.visual(e.target);
+        if (v) v.alpha = 0;
+        this.popup(e.target, 'Gone!', '#f0d890');
+        this.wait = 300;
+        break;
+      }
       case 'end':
         this.wait = 300;
         break;
@@ -498,9 +527,9 @@ export class BattleScene implements Scene {
     this.phase = 'done';
     this.closeMenu();
     this.autoEl.hidden = true;
-    if (result === 'fled') {
+    if (result === 'fled' || result === 'delivered') {
       this.battle.applyResults(this.game);
-      this.hooks.onEnd('fled', null);
+      this.hooks.onEnd(result, null);
       return;
     }
     if (result === 'defeat') {
@@ -593,7 +622,7 @@ export class BattleScene implements Scene {
   }
 
   render(g: CanvasRenderingContext2D): void {
-    const region = this.battle.encounter.id === 'sorting-rats' ? 'interior' : this.battle.encounter.region;
+    const region = this.battle.encounter.backdrop ?? this.battle.encounter.region;
     g.drawImage(backdrop(region), 0, 0);
     // Rain and wind tint the scene a little.
     const w = this.battle.forecast()[0];

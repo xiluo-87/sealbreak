@@ -12,7 +12,7 @@ export type FlagValue = boolean | number | string;
 export type PartyId = 'rookie' | 'odile' | 'fenn' | 'juniper';
 export const PARTY_IDS: readonly PartyId[] = ['rookie', 'odile', 'fenn', 'juniper'];
 
-export const STATE_VERSION = 3;
+export const STATE_VERSION = 4;
 
 export type LetterState = 'sealed' | 'opened' | 'resealed' | 'delivered';
 
@@ -30,6 +30,24 @@ export interface MemberState {
   xp: number;
   hp: number;
   fp: number;
+}
+
+/** Random encounters on roads (design 7.1). */
+export interface RoadState {
+  /** The danger gauge: 0 on entering a road and after every encounter. */
+  gauge: number;
+  /** Steps left before another encounter can happen. */
+  cooldown: number;
+  /** Steps left on a rung Repel Bell. */
+  repel: number;
+  /** Encounters so far on the current road. */
+  count: number;
+  /** Road events already seen; the pool refills once a region's run out. */
+  seen: string[];
+}
+
+export function freshRoad(): RoadState {
+  return { gauge: 0, cooldown: 0, repel: 0, count: 0, seen: [] };
 }
 
 export interface GameState {
@@ -55,6 +73,7 @@ export interface GameState {
   /** Sealing-wax sticks left for resealing. */
   wax: number;
   accessories: { owned: string[]; equipped: Partial<Record<PartyId, string>> };
+  road: RoadState;
 }
 
 export function freshLetters(): Record<string, LetterProgress> {
@@ -103,6 +122,7 @@ export function newGame(name: string, seed: string): GameState {
     coin: START_COIN,
     items: { ...START_ITEMS },
     ...freshExtras(),
+    road: freshRoad(),
   };
 }
 

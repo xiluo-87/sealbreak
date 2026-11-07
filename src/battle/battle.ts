@@ -4,7 +4,8 @@
  * player, the enemy AI or auto-battle), and plays back the returned events.
  */
 import { BALANCE } from '../data/balance';
-import { ENCOUNTERS, ENEMIES, type EncounterDef, type EnemyMove } from '../data/enemies';
+import { ENCOUNTERS, ENEMIES, type EncounterDef, type EnemyMove, getEncounter } from '../data/enemies';
+import { LETTER_BY_ID } from '../data/letters';
 import { ITEMS } from '../data/items';
 import { MEMBERS, statsAt, statsWith } from '../data/party';
 import { SKILLS, type SkillDef, type Weight } from '../data/skills';
@@ -47,6 +48,10 @@ export interface Combatant {
   dot: { amount: number; turns: number } | null;
   /** Turns left bound by Legal Binding. */
   bound: number;
+  /** Turns this combatant has taken. */
+  acted?: number;
+  /** Ran away rather than being beaten (the Runaway Parcel). */
+  fled?: boolean;
 }
 
 export type Action =
@@ -56,7 +61,10 @@ export type Action =
   | { kind: 'guard' }
   | { kind: 'run' }
   | { kind: 'enemy'; move: string; target: string }
-  | { kind: 'letter'; letter: string; mode: LetterMode; target: string };
+  | { kind: 'letter'; letter: string; mode: LetterMode; target: string }
+  | { kind: 'deliver'; letter: string; target: string };
+
+export type BattleResult = 'victory' | 'defeat' | 'fled' | 'delivered';
 
 export type BattleEvent =
   | { type: 'act'; actor: string; label: string; anim: 'attack' | 'cast' | 'guard' | 'item' | 'read' | 'breakSeal' }
@@ -70,7 +78,9 @@ export type BattleEvent =
   | { type: 'message'; text: string }
   | { type: 'skip'; actor: string }
   | { type: 'biscuit'; what: 'headbutt' | 'eat' | 'wander'; target?: string }
-  | { type: 'end'; result: 'victory' | 'defeat' | 'fled' };
+  | { type: 'join'; target: string }
+  | { type: 'escape'; target: string }
+  | { type: 'end'; result: BattleResult };
 
 export interface Results {
   xpEach: number;
@@ -90,7 +100,20 @@ export class Battle {
   time = 0;
   /** Completed turns. */
   turn = 0;
-  result: 'victory' | 'defeat' | 'fled' | null = null;
+  result: BattleResult | null = null;
+  /** The letter handed over if the fight ended in a delivery. */
+  delivered: string | null = null;
+  /** Items taken by thieving enemies. */
+  readonly itemsStolen: string[] = [];
+  /** Letters Vane confiscated for the rest of the fight. */
+  readonly confiscated: string[] = [];
+  /** Enemy moves silenced by a letter read aloud, as `key:move`. */
+  private readonly silenced = new Set<string>();
+  /** Letters the party still holds, carried or in the sack. */
+  private readonly held: Set<string>;
+  /** Letters whose seals have never been broken. */
+  private readonly unopened: Set<string>;
+  private readonly itemsLeft: Record<string, number>;
   readonly biscuit: boolean;
   coinStolen = 0;
   /** Coin gained mid-battle (Pickpocket). */
@@ -105,80 +128,23 @@ export class Battle {
   readonly day: number;
   private lastEnemyBuff: { mult: number; turns: number; stat: 'atk' | 'def' } | null = null;
 
-  constructor(game: GameState, encounterId: string, seed: string | number) {
-    const enc = ENCOUNTERS[encounterId];
+  constructor(
+    private readonly game: GameState,
+    encounterId: string,
+    seed: string | number,
+  ) {
+    const enc = getEncounter(encounterId);
     if (!enc) throw new Error(`unknown encounter ${encounterId}`);
     this.encounter = enc;
     this.rng = new Rng(seed);
+    this.held = new Set(Object.entries(game.letters).filter(([, p]) => p.state !== 'delivered').map(([id]) => id));
+    this.unopened = new Set(Object.entries(game.letters).filter(([, p]) => !p.broken && p.state !== 'opened' && p.state !== 'resealed').map(([id]) => id));
+    this.itemsLeft = { ...game.items };
     const members: PartyId[] = [...game.party];
     for (const g of enc.guests ?? []) if (!members.includes(g)) members.push(g);
-    for (const id of members) {
-      const m = game.members[id];
-      const s = statsWith(id, m.level, gearBonus(game, id));
-      this.combatants.push({
-        key: id,
-        side: 'party',
-        id,
-        name: MEMBERS[id].name.replace('{name}', game.rookieName),
-        level: m.level,
-        maxHp: s.hp,
-        hp: Math.max(0, Math.min(s.hp, m.hp)),
-        maxFp: s.fp,
-        fp: Math.max(0, Math.min(s.fp, m.fp)),
-        atk: s.atk,
-        def: s.def,
-        spd: s.spd,
-        wil: s.wil,
-        nextAt: 0,
-        ailments: {},
-        atkBuff: null,
-        defBuff: null,
-        guarding: false,
-        taunt: 0,
-        ko: m.hp <= 0,
-        skills: [...MEMBERS[id].skills],
-        letters: carriedBy(game, id).filter((l) => game.letters[l]?.state === 'sealed'),
-        regen: null,
-        dot: null,
-        bound: 0,
-      });
-    }
-    const counts = new Map<string, number>();
-    enc.enemies.forEach((eid, i) => {
-      const e = ENEMIES[eid];
-      if (!e) throw new Error(`unknown enemy ${eid}`);
-      const n = (counts.get(eid) ?? 0) + 1;
-      counts.set(eid, n);
-      const total = enc.enemies.filter((x) => x === eid).length;
-      this.combatants.push({
-        key: `e${i}`,
-        side: 'enemy',
-        id: eid,
-        name: total > 1 ? `${e.name} ${String.fromCharCode(64 + n)}` : e.name,
-        level: e.level,
-        maxHp: e.hp,
-        hp: e.hp,
-        maxFp: 0,
-        fp: 0,
-        atk: e.atk,
-        def: e.def,
-        spd: e.spd,
-        wil: e.wil,
-        nextAt: 0,
-        ailments: {},
-        atkBuff: null,
-        defBuff: null,
-        guarding: false,
-        taunt: 0,
-        ko: false,
-        ...(e.held ? { held: e.held } : {}),
-        skills: [],
-        letters: [],
-        regen: null,
-        dot: null,
-        bound: 0,
-      });
-    });
+    for (const id of members) this.combatants.push(this.memberCombatant(id));
+    enc.enemies.forEach((eid, i) => this.combatants.push(this.enemyCombatant(eid, `e${i}`)));
+    this.nameEnemies();
     this.biscuit = !!game.flags['biscuit.joined'];
     this.day = game.day;
     this.keepsake = this.combatants.some((c) => c.letters.includes('L18'));
@@ -189,6 +155,84 @@ export class Battle {
     for (let i = 0; i < WEATHER_BLOCKS; i++) {
       const r = this.rng.next() * total;
       this.weather.push(r < mix.clear ? 'clear' : r < mix.clear + mix.rain ? 'rain' : 'wind');
+    }
+  }
+
+  private memberCombatant(id: PartyId): Combatant {
+    const m = this.game.members[id];
+    const s = statsWith(id, m.level, gearBonus(this.game, id));
+    return {
+      key: id,
+      side: 'party',
+      id,
+      name: MEMBERS[id].name.replace('{name}', this.game.rookieName),
+      level: m.level,
+      maxHp: s.hp,
+      hp: Math.max(0, Math.min(s.hp, m.hp)),
+      maxFp: s.fp,
+      fp: Math.max(0, Math.min(s.fp, m.fp)),
+      atk: s.atk,
+      def: s.def,
+      spd: s.spd,
+      wil: s.wil,
+      nextAt: 0,
+      ailments: {},
+      atkBuff: null,
+      defBuff: null,
+      guarding: false,
+      taunt: 0,
+      ko: m.hp <= 0,
+      skills: [...MEMBERS[id].skills],
+      letters: carriedBy(this.game, id).filter((l) => this.game.letters[l]?.state === 'sealed'),
+      regen: null,
+      dot: null,
+      bound: 0,
+    };
+  }
+
+  private enemyCombatant(eid: string, key: string): Combatant {
+    const e = ENEMIES[eid];
+    if (!e) throw new Error(`unknown enemy ${eid}`);
+    return {
+      key,
+      side: 'enemy',
+      id: eid,
+      name: e.name,
+      level: e.level,
+      maxHp: e.hp,
+      hp: e.hp,
+      maxFp: 0,
+      fp: 0,
+      atk: e.atk,
+      def: e.def,
+      spd: e.spd,
+      wil: e.wil,
+      nextAt: 0,
+      ailments: {},
+      atkBuff: null,
+      defBuff: null,
+      guarding: false,
+      taunt: 0,
+      ko: false,
+      ...(e.held ? { held: e.held } : {}),
+      skills: [],
+      letters: [],
+      regen: null,
+      dot: null,
+      bound: 0,
+    };
+  }
+
+  /** Letters A, B, C for enemies that share a name. */
+  private nameEnemies(): void {
+    const enemies = this.combatants.filter((c) => c.side === 'enemy');
+    const counts = new Map<string, number>();
+    for (const c of enemies) {
+      const base = ENEMIES[c.id]?.name ?? c.id;
+      const total = enemies.filter((x) => ENEMIES[x.id]?.name === base).length;
+      const n = (counts.get(base) ?? 0) + 1;
+      counts.set(base, n);
+      c.name = total > 1 ? `${base} ${String.fromCharCode(64 + n)}` : base;
     }
   }
 
@@ -322,10 +366,11 @@ export class Battle {
     const avg = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
     const pLevel = avg(party.map((c) => c.level));
     const eLevel = avg(enemies.map((c) => c.level));
-    if (pLevel >= eLevel + BALANCE.run.levelGapForCertain) return 1;
     const r = BALANCE.run;
+    const penalty = enemies.some((c) => ENEMIES[c.id]?.inspector) ? r.inspectorPenalty : 0;
+    if (pLevel >= eLevel + r.levelGapForCertain) return 1 - penalty;
     const chance = r.base + r.perSpd * (avg(party.map((c) => c.spd)) - avg(enemies.map((c) => c.spd)));
-    return Math.min(r.max, Math.max(r.min, chance));
+    return Math.max(0, Math.min(r.max, Math.max(r.min, chance)) - penalty);
   }
 
   private atkOf(c: Combatant): number {
@@ -342,7 +387,10 @@ export class Battle {
   damage(attacker: Combatant, target: Combatant, power: number, magic = false): number {
     const a = magic ? attacker.wil : this.atkOf(attacker);
     const d = magic ? target.wil : this.defOf(target);
-    let mult = this.weatherAt(this.time) === 'clear' ? BALANCE.weather.clearAttack : 1;
+    const weather = this.weatherAt(this.time);
+    let mult = weather === 'clear' ? BALANCE.weather.clearAttack : 1;
+    if (weather === 'wind' && !magic) mult *= ENEMIES[attacker.id]?.windAtk ?? 1;
+    if (weather === 'rain' && target.side === 'enemy') mult *= ENEMIES[target.id]?.rainWeakness ?? 1;
     if (target.guarding) mult *= this.weatherAt(this.time) === 'rain' ? BALANCE.guardFactor / BALANCE.weather.rainSupport : BALANCE.guardFactor;
     const spread = this.rng.range(BALANCE.damageSpread[0], BALANCE.damageSpread[1]);
     return Math.max(1, Math.round(((power * a) / (d + 10)) * mult * spread));
@@ -383,6 +431,7 @@ export class Battle {
         const t = this.get(action.target);
         events.push({ type: 'act', actor: c.key, label: 'Attack', anim: 'attack' });
         this.hurt(t, this.damage(c, t, BALANCE.basicAttackPower), events);
+        this.counter(c, t, events);
         break;
       }
       case 'skill': {
@@ -392,6 +441,7 @@ export class Battle {
         c.fp = Math.max(0, c.fp - s.fp);
         events.push({ type: 'act', actor: c.key, label: s.name, anim: s.power ? 'attack' : 'cast' });
         this.useSkill(c, s, action.target, events);
+        if (s.power && !s.magic && s.target === 'enemy') this.counter(c, this.get(action.target), events);
         break;
       }
       case 'letter': {
@@ -405,7 +455,18 @@ export class Battle {
         }
         events.push({ type: 'act', actor: c.key, label: s.name, anim: action.mode === 'burst' ? 'breakSeal' : 'read' });
         this.useSkill(c, s, action.target, events);
+        this.letterSideEffects(c, action.letter, events);
         break;
+      }
+      case 'deliver': {
+        const title = LETTER_BY_ID[action.letter]?.title ?? action.letter;
+        const t = this.get(action.target);
+        events.push({ type: 'act', actor: c.key, label: 'Deliver', anim: 'read' });
+        events.push({ type: 'message', text: `${c.name} holds out “${title}” to ${t.name}.` });
+        this.result = 'delivered';
+        this.delivered = action.letter;
+        events.push({ type: 'end', result: 'delivered' });
+        return events;
       }
       case 'item': {
         const it = ITEMS[action.item];
@@ -593,23 +654,122 @@ export class Battle {
 
   private enemyMove(c: Combatant, move: EnemyMove, t: Combatant, events: BattleEvent[]): void {
     events.push({ type: 'act', actor: c.key, label: move.name, anim: move.anim ?? 'attack' });
-    if (move.power) this.hurt(t, this.damage(c, t, move.power, move.magic), events);
-    if (move.inflict) this.inflict(t, move.inflict.ailment, move.inflict.chance, events);
-    if (move.delay && !t.ko) {
-      const ticks = move.delay * (this.weatherAt(this.time) === 'wind' ? BALANCE.weather.windThreat : 1);
-      t.nextAt += ticks;
-      events.push({ type: 'delay', target: t.key, ticks });
+    const targets = move.all ? this.alive('party') : [t];
+    for (const target of targets) {
+      if (move.power) {
+        const before = target.hp;
+        this.hurt(target, this.damage(c, target, move.power, move.magic), events);
+        if (move.drain && !c.ko) {
+          const amt = Math.min(c.maxHp - c.hp, Math.round((before - target.hp) * move.drain));
+          if (amt > 0) {
+            c.hp += amt;
+            events.push({ type: 'heal', target: c.key, amount: amt });
+          }
+        }
+      }
+      if (move.inflict) this.inflict(target, move.inflict.ailment, move.inflict.chance, events);
+      if (move.delay && !target.ko) {
+        const ticks = move.delay * (this.weatherAt(this.time) === 'wind' ? BALANCE.weather.windThreat : 1);
+        target.nextAt += ticks;
+        events.push({ type: 'delay', target: target.key, ticks });
+      }
     }
     if (move.stealCoin) {
       const coin = this.rng.int(move.stealCoin[0], move.stealCoin[1]);
       this.coinStolen += coin;
       events.push({ type: 'message', text: `${c.name} pockets ${coin} coin!` });
     }
+    if (move.stealItem) {
+      const have = Object.entries(this.itemsLeft).filter(([, n]) => n > 0).map(([id]) => id);
+      if (have.length > 0) {
+        const item = this.rng.pick(have);
+        this.itemsLeft[item] = (this.itemsLeft[item] ?? 1) - 1;
+        this.itemsStolen.push(item);
+        events.push({ type: 'message', text: `${c.name} makes off with a ${ITEMS[item]?.name.toLowerCase() ?? item}!` });
+      }
+    }
+    if (move.summon) {
+      const key = `e${this.combatants.length}`;
+      const n = this.enemyCombatant(move.summon, key);
+      n.nextAt = this.time + this.delayFor(n, 'normal') * 0.5;
+      this.combatants.push(n);
+      this.nameEnemies();
+      events.push({ type: 'join', target: key }, { type: 'message', text: `${n.name} answers the call.` });
+    }
+    if (move.guardAllies) {
+      for (const a of this.alive('enemy')) a.guarding = true;
+      events.push({ type: 'message', text: 'They close ranks behind their shields.' });
+    }
+    if (move.rally) {
+      c.atkBuff = { mult: move.rally, turns: 3 };
+      events.push({ type: 'message', text: `${c.name} looks more determined.` });
+    }
+    if (move.confiscate) {
+      const holders = this.alive('party').filter((p) => p.letters.length > 0);
+      if (holders.length > 0) {
+        const p = this.rng.pick(holders);
+        const letter = this.rng.pick(p.letters);
+        p.letters = p.letters.filter((l) => l !== letter);
+        this.confiscated.push(letter);
+        events.push({ type: 'message', text: `${c.name} confiscates “${LETTER_BY_ID[letter]?.title ?? letter}”. Its skill is lost for this fight.` });
+      } else events.push({ type: 'message', text: `${c.name} finds nothing left to confiscate.` });
+    }
+  }
+
+  /** Enemies that strike back when hit (Salt Crabs). */
+  private counter(attacker: Combatant, target: Combatant, events: BattleEvent[]): void {
+    if (target.side !== 'enemy' || target.ko || attacker.ko) return;
+    const chance = ENEMIES[target.id]?.counter ?? 0;
+    if (chance <= 0 || !this.rng.chance(chance)) return;
+    events.push({ type: 'message', text: `${target.name} strikes back!` });
+    this.hurt(attacker, this.damage(target, attacker, 8), events);
+  }
+
+  /** Reading a letter can silence a move, and some enemies are weak to a tone. */
+  private letterSideEffects(c: Combatant, letter: string, events: BattleEvent[]): void {
+    const tone = LETTER_BY_ID[letter]?.tone;
+    for (const e of this.alive('enemy')) {
+      const def = ENEMIES[e.id];
+      const sil = def?.silencedBy;
+      if (sil && sil.letters.includes(letter) && !this.silenced.has(`${e.key}:${sil.move}`)) {
+        this.silenced.add(`${e.key}:${sil.move}`);
+        events.push({ type: 'message', text: sil.text });
+      }
+      if (def?.weakTo && def.weakTo === tone && !e.ko) {
+        events.push({ type: 'message', text: `${e.name} wavers at the words.` });
+        this.hurt(e, this.damage(c, e, 16, true), events);
+      }
+    }
+  }
+
+  /** Recipients in the fight the party could hand a letter to now. */
+  deliverOptions(): { letter: string; target: string }[] {
+    const out: { letter: string; target: string }[] = [];
+    for (const e of this.alive('enemy')) {
+      const letter = ENEMIES[e.id]?.recipient;
+      if (!letter || !this.held.has(letter)) continue;
+      // Vane only listens once she is losing, and only to a letter never opened.
+      if (letter === 'L18' && (e.hp / e.maxHp >= 0.5 || !this.unopened.has('L18') || this.broken.includes('L18'))) continue;
+      out.push({ letter, target: e.key });
+    }
+    return out;
+  }
+
+  /** True if a move has been silenced for this enemy. */
+  isSilenced(c: Combatant, move: string): boolean {
+    return this.silenced.has(`${c.key}:${move}`);
   }
 
   /** Ages ailments and buffs, moves the actor along the timeline, and checks for the end. */
   private endTurn(c: Combatant, weight: Weight): BattleEvent[] {
     const events: BattleEvent[] = [];
+    c.acted = (c.acted ?? 0) + 1;
+    const flee = c.side === 'enemy' ? ENEMIES[c.id]?.fleeAfter : undefined;
+    if (flee && c.acted >= flee && !c.ko) {
+      c.ko = true;
+      c.fled = true;
+      events.push({ type: 'escape', target: c.key }, { type: 'message', text: `${c.name} gets away!` });
+    }
     if (!c.ko) {
       c.nextAt = Math.max(c.nextAt, this.time) + this.delayFor(c, weight);
       const aged: Partial<Record<Ailment, number>> = {};
@@ -624,6 +784,13 @@ export class Battle {
       if (c.taunt > 0) c.taunt--;
     }
     this.turn++;
+    const join = this.encounter.join;
+    if (join && this.turn >= join.turn && !this.combatants.some((x) => x.key === join.member)) {
+      const m = this.memberCombatant(join.member);
+      m.nextAt = this.time + 0.01;
+      this.combatants.push(m);
+      events.push({ type: 'join', target: m.key }, { type: 'message', text: join.text });
+    }
     events.push(...this.checkEnd());
     if (!this.result && this.biscuit && this.turn % BALANCE.biscuitEvery === 0) events.push(...this.biscuitTurn());
     return events;
@@ -632,8 +799,9 @@ export class Battle {
   private checkEnd(): BattleEvent[] {
     if (this.result) return [];
     if (this.alive('enemy').length === 0) {
-      this.result = 'victory';
-      return [{ type: 'end', result: 'victory' }];
+      const beaten = this.combatants.some((c) => c.side === 'enemy' && !c.fled);
+      this.result = beaten ? 'victory' : 'fled';
+      return [{ type: 'end', result: this.result }];
     }
     if (this.alive('party').length === 0) {
       this.result = 'defeat';
@@ -673,7 +841,19 @@ export class Battle {
   /** The enemy AI: a weighted pick of moves, aimed at whoever is taunting or at random. */
   enemyAction(c: Combatant): Action {
     const e = ENEMIES[c.id];
-    const moves = e?.moves ?? [];
+    const frac = c.hp / c.maxHp;
+    const room = this.alive('enemy').length < 4;
+    const anyLetters = this.alive('party').some((p) => p.letters.length > 0);
+    const all = e?.moves ?? [];
+    const allowed = all.filter(
+      (m) =>
+        (m.below === undefined || frac < m.below) &&
+        (m.above === undefined || frac >= m.above) &&
+        !this.isSilenced(c, m.id) &&
+        (!m.summon || room) &&
+        (!m.confiscate || anyLetters),
+    );
+    const moves = allowed.length > 0 ? allowed : all.filter((m) => !this.isSilenced(c, m.id)).slice(0, 1);
     const total = moves.reduce((a, m) => a + m.chance, 0);
     let r = this.rng.next() * total;
     let move = moves[0];
@@ -709,7 +889,7 @@ export class Battle {
     const results: Results = { xpEach: 0, coin: 0, items: [], levelUps: [] };
     const party = this.combatants.filter((c) => c.side === 'party');
     if (this.result === 'victory') {
-      const enemies = this.combatants.filter((c) => c.side === 'enemy');
+      const enemies = this.combatants.filter((c) => c.side === 'enemy' && !c.fled);
       const xp = enemies.reduce((a, e) => a + (ENEMIES[e.id]?.xp ?? 0), 0);
       results.xpEach = Math.ceil(xp / Math.max(1, party.length));
       results.coin = enemies.reduce((a, e) => a + (ENEMIES[e.id]?.coin ?? 0), 0) + this.coinStolen + this.coinGained;
@@ -718,6 +898,7 @@ export class Battle {
       results.coin = this.coinGained - this.coinStolen;
     }
     game.coin = Math.max(0, game.coin + results.coin);
+    for (const it of this.itemsStolen) game.items[it] = Math.max(0, (game.items[it] ?? 0) - 1);
     for (const it of results.items) game.items[it] = Math.min(99, (game.items[it] ?? 0) + 1);
     for (const c of party) {
       const id = c.id as PartyId;

@@ -4,7 +4,7 @@
 
 Sealbreak is a short, story-driven browser RPG about a last delivery run across a kingdom still getting over an old war. One playthrough takes about 90 minutes and there are four endings.
 
-**Status:** Milestone 4 (letters) is done. The sack of letters falls into your hands in the opening scene, and every letter can be carried for its skill, opened mid-fight with Break the Seal, read, resealed or delivered. The satchel shows who carries what and how interested the Postal Inspectorate is in you. Three letters can be delivered in Thistle Cross. Random encounters, the danger gauge and the Inspectors on the road come next, in Milestone 5.
+**Status:** Milestone 5 (random encounters) is done, and the game plays on phones. The Thistle Road now runs the full way to the toll gate, with a danger gauge shown as a roadside bell, random fights, road events, Repel Bells, Inspector patrols that grow with every broken seal, the rare Runaway Parcel, and the toll-gate dispute where Fenn joins. The journey to Bellwether Fen and beyond comes next, in Milestone 6.
 
 ## The idea
 

@@ -30,6 +30,26 @@ export const BALANCE = {
   levelCap: 15,
   /** Delivery XP to each party member (used from Milestone 4). */
   deliveryXp: 30,
+  /** Random encounters (design 7.1-7.3). */
+  encounters: {
+    threshold: 40,
+    cooldown: 15,
+    repelSteps: 40,
+    terrain: { paved: 0.7, road: 1, off: 1.4 },
+    battleShare: 0.7,
+    parcel: 0.03,
+    inspectorBase: 0.05,
+    inspectorPerHeat: 0.04,
+    inspectorMax: 0.5,
+    /** Two Inspectors from this Heat, and a Senior Inspector from `seniorHeat`. */
+    pairHeat: 3,
+    seniorHeat: 6,
+    recipientChance: 0.25,
+    /** A held recipient's encounter is certain by this encounter on their road. */
+    recipientBy: 3,
+    /** Gauge gain with the "low" encounter-rate option. */
+    lowRate: 0.6,
+  },
 } as const;
 
 /** Total XP needed to be at a level: 12n + 3n^2, with level 1 at zero. */

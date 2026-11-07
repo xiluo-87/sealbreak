@@ -21,7 +21,7 @@ function pair(far: string[], near: string[], gap: number): string[] {
 const GAP = 7;
 const CLOSED = pair(['.......', '.......', '.......', 'o......', '.ooooo.', '..sss..'], ['..........', '..........', '..........', '.........o', '.oooooooo.', '..ssssss..'], GAP);
 
-const EYES: FaceGrids['eyes'] = {
+export const EYES: FaceGrids['eyes'] = {
   neutral: {
     open: pair(
       ['o......', 'ooooo..', 'oiiiiwo', 'ihpciW.', 'icpjw..', '.ijjw..', '..ss...'],
@@ -64,7 +64,7 @@ const EYES: FaceGrids['eyes'] = {
   },
 };
 
-const BROWS: FaceGrids['brows'] = {
+export const BROWS: FaceGrids['brows'] = {
   neutral: pair(['..bbb..', 'bb...b.', '.......'], ['...bbbbb..', '.bbB....bb', 'b.........'], GAP),
   happy: pair(['..bbb..', 'bb...b.', '.......'], ['...bbbbb..', '.bb.....bb', 'b.........'], GAP),
   sad: pair(['....bb.', '.bbb...', 'b......'], ['bb........', '..bbbbb...', '.......bbb'], GAP),
@@ -72,7 +72,7 @@ const BROWS: FaceGrids['brows'] = {
   surprised: pair(['.bbb...', 'b...b..', '.......'], ['..bbbbbb..', '.b......b.', '..........'], GAP),
 };
 
-const MOUTHS: FaceGrids['mouths'] = {
+export const MOUTHS: FaceGrids['mouths'] = {
   neutral: {
     closed: ['........m.', '..mmmmmm..', '...lLLl...'],
     half: ['........m.', '..mmmmmmm.', '..mrrrrm..', '...lLLl...'],
@@ -100,7 +100,7 @@ const MOUTHS: FaceGrids['mouths'] = {
   },
 };
 
-const FACE_KEY: Record<string, string> = {
+export const FACE_KEY: Record<string, string> = {
   o: 'eye:o',
   i: 'eye:3',
   c: 'eye:1',

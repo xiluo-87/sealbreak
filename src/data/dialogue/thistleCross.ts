@@ -340,13 +340,6 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
   ),
 
   // Thistle Road.
-  simple('goose-appears', [narrate('A goose steps out of the hedge and looks at you as if you owe it money.')]),
-  simple('hogs-appear', [narrate('Two hogs come crashing out of the brambles, wearing most of them.')]),
-  simple('brigand-appears', [
-    say('brigand', 'Hold it there. Your money or your letters.'),
-    say('rookie', 'The letters aren’t mine to give.', 'neutral'),
-    say('brigand', 'Then I’ll take the money. And the goose takes whatever it likes. It’s that sort of goose.'),
-  ]),
   simple(
     'road-start',
     [
@@ -354,8 +347,4 @@ export const THISTLE_CROSS_DIALOGUE: Dialogue[] = [
     ],
     [{ set: 'road.seen' }],
   ),
-  simple('tollgate', [
-    narrate('The toll gate is down. A sign hangs on it: BACK SOON. — F.H.'),
-    narrate('Under that, an older sign: BACK SOON. Under that, older still: BACK SOON.'),
-  ]),
 ];

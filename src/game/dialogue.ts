@@ -5,7 +5,7 @@
  * either offers choices or moves on to `next`.
  */
 import type { Expression } from '../sprites/characters/portraitKit';
-import { applyAll, check, type Condition, type Effect, type Outbox } from './conditions';
+import { applyAll, check, type Condition, type Effect, emptyOutbox, type Outbox } from './conditions';
 import type { GameState } from './state';
 
 export type SpeakerId = string;
@@ -56,7 +56,7 @@ export class DialogueRun {
   private lineIndex = 0;
   done = false;
   /** Deliveries and other results of this conversation's effects. */
-  readonly out: Outbox = { deliveries: [] };
+  readonly out: Outbox = emptyOutbox();
 
   constructor(
     readonly dialogue: Dialogue,

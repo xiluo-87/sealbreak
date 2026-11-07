@@ -11,7 +11,7 @@ import { statsAt } from '../data/party';
 import { xpForLevel, BALANCE } from '../data/balance';
 import { ACCESSORIES } from '../data/accessories';
 import { LETTERS, START_WAX } from '../data/letters';
-import { cleanName, type FlagValue, freshExtras, freshMember, type GameState, type LetterProgress, type LetterState, type MemberState, PARTY_IDS, type PartyId, STATE_VERSION } from './state';
+import { cleanName, type FlagValue, freshExtras, freshMember, freshRoad, type GameState, type LetterProgress, type LetterState, type MemberState, PARTY_IDS, type PartyId, type RoadState, STATE_VERSION } from './state';
 
 export const SAVE_KEY = 'sealbreak.save.v1';
 export const SLOT_IDS = ['auto', '1', '2', '3'] as const;
@@ -49,6 +49,8 @@ export const MIGRATIONS: Record<number, Migration> = {
   }),
   /** Version 3 adds the letters, Heat, wax sticks and accessories. */
   2: (old) => ({ ...old, ...freshExtras() }),
+  /** Version 4 adds the danger gauge and road events for random encounters. */
+  3: (old) => ({ ...old, road: freshRoad() }),
 };
 
 const LETTER_STATES: readonly LetterState[] = ['sealed', 'opened', 'resealed', 'delivered'];
@@ -159,6 +161,19 @@ export function normalizeState(raw: unknown): GameState | null {
     heat: Math.max(0, Math.round(finite(raw.heat, 0))),
     wax: Math.max(0, Math.min(START_WAX, Math.round(finite(raw.wax, START_WAX)))),
     accessories: { owned, equipped },
+    road: normalizeRoad(raw.road),
+  };
+}
+
+function normalizeRoad(raw: unknown): RoadState {
+  const r = isRecord(raw) ? raw : {};
+  const n = (v: unknown): number => Math.max(0, finite(v, 0));
+  return {
+    gauge: n(r.gauge),
+    cooldown: Math.round(n(r.cooldown)),
+    repel: Math.round(n(r.repel)),
+    count: Math.round(n(r.count)),
+    seen: Array.isArray(r.seen) ? [...new Set(r.seen.filter((x): x is string => typeof x === 'string'))] : [],
   };
 }
 

@@ -10,11 +10,11 @@ import { capsule, ellipse, limb, path, poly, roundRect, type Shape } from '../sh
 import { anim, type CharacterSprites, type Facing, SPRITE_SIZES, type SpriteSetDef } from '../types';
 import { WALK6 } from './kit';
 
-export type Build = 'average' | 'stout' | 'slim' | 'child';
+export type Build = 'average' | 'stout' | 'slim' | 'child' | 'tall';
 export type HairStyle = 'short' | 'bald' | 'bun' | 'curly' | 'long' | 'tied';
 export type TopStyle = 'jacket' | 'long' | 'dress' | 'shirt';
 export type HatStyle = 'flatcap' | 'bonnet' | 'tophat' | 'baker' | 'kerchief';
-export type Extra = 'beard' | 'moustache' | 'glasses' | 'sash' | 'chain' | 'shawl' | 'flour' | 'toolbelt' | 'stoop';
+export type Extra = 'beard' | 'moustache' | 'glasses' | 'sash' | 'chain' | 'shawl' | 'flour' | 'toolbelt' | 'stoop' | 'stubble' | 'scar' | 'sign' | 'patches' | 'badge' | 'ledger' | 'clipboard';
 
 export interface FolkSpec {
   id: string;
@@ -52,6 +52,7 @@ function materials(s: FolkSpec): Record<string, Material> {
     eye: manual('eye', ['#6f6a80', '#3a3546', '#252231', '#16141e'], '#0e0c14'),
     blush: manual('blush', ['#f2a28c', '#e48a78', '#c86c62', '#a2524e'], '#5a3030'),
     flour: manual('flour', ['#ffffff', '#f4efe4', '#ddd4c2', '#c2b8a4'], '#8a8070'),
+    sign: manual('sign', ['#fbf6e8', '#efe4c8', '#d8c8a2', '#b0a07c'], '#5a4a34'),
   };
 }
 
@@ -64,6 +65,8 @@ function dims(b: Build): { body: number; chest: number; shoulder: number; waist:
       return { body: -16, chest: -6, shoulder: 6, waist: 5.4, hem: 7, arm: 6.2, leg: 2.4 };
     case 'child':
       return { body: -11, chest: -4.5, shoulder: 5.2, waist: 5, hem: 6, arm: 5.4, leg: 2.2 };
+    case 'tall':
+      return { body: -17.4, chest: -6.8, shoulder: 7.8, waist: 7, hem: 8.6, arm: 7.8, leg: 2.9 };
     default:
       return { body: -16, chest: -6, shoulder: 6.6, waist: 6.4, hem: 8, arm: 6.6, leg: 2.6 };
   }
@@ -305,6 +308,19 @@ function parts(s: FolkSpec, view: Facing): PartDef[] {
   if (side) out.push(...arm('R', 3.5, -0.3), ...arm('L', 8, -0.3));
   else out.push(...arm('R', 8, -1), ...arm('L', 8, 1));
 
+  // The toll-gate sign, slung on the back.
+  if (s.extras?.includes('sign')) {
+    const board = back ? roundRect(-6, -10, 12, 13, 1) : side ? roundRect(-sideW - 3.4, -11, 3, 13, 0.6) : roundRect(-8.6, -11, 3, 7, 0.6);
+    out.push({ name: 'sign', bone: 'body', z: back ? 9 : 2.4, material: 'sign', shape: board, shade: { shadow: 1, light: 1 }, cast: 1 });
+    if (back) {
+      out.push({ name: 'signStripe', bone: 'body', z: 9.1, material: 'accent', shape: [...poly(-6, -7, 6, -4, 6, -2, -6, -5), ...poly(-6, -1, 6, 2, 6, 3, -6, 0)], clipTo: ['sign'], shade: { shadow: 1, light: 0 }, cast: 0, sep: false, outline: false });
+    }
+  }
+  if ((s.extras?.includes('ledger') || s.extras?.includes('clipboard')) && !back) {
+    const clip = s.extras.includes('clipboard');
+    out.push({ name: 'book', bone: side ? 'armL' : 'armR', z: side ? 8.6 : 8.4, material: clip ? 'sign' : 'accent', shape: roundRect(-2.6, 6, 5.2, 6, 0.6), shade: { shadow: 1, light: 1 }, cast: 0 });
+  }
+
   // Head.
   out.push({ name: 'head', bone: 'head', z: 10, material: 'skin', shape: headShape(side), shade: { shadow: 1, light: 1 } });
   const hs = hairShape(s.hairStyle, view);
@@ -350,7 +366,12 @@ function details(s: FolkSpec, view: Facing): DetailDef[] {
     if (s.topStyle === 'jacket' || s.topStyle === 'long') {
       d.push({ name: 'buttons', bone: 'body', x: -2, y: -7, grid: ['b', '.', '.', 'b'], key: { b: 'brass:1' }, clip: clipTo(s, ['torso', 'belly']) });
     }
+    if (s.extras?.includes('stubble')) d.push({ name: 'stubble', bone: 'head', x: -3, y: -4, grid: ['h.h.h.h', '.h.h.h.'], key: { h: 'hair:2' }, clip: ['head'] });
+    if (s.extras?.includes('scar')) d.push({ name: 'scar', bone: 'head', x: 2, y: -9, grid: ['m', 'm'], key: { m: 'skin:3' }, clip: ['head', 'hair'] });
+    if (s.extras?.includes('patches')) d.push({ name: 'patches', bone: 'body', x: -6, y: -10, grid: ['tt.......tt', 'tt.......tt'], key: { t: 'top:3' }, clip: ['torso'] });
+    if (s.extras?.includes('badge')) d.push({ name: 'badge', bone: 'body', x: 2, y: -8, grid: ['b'], key: { b: 'brass:0' }, clip: ['torso'] });
   } else if (view !== 'up') {
+    if (s.extras?.includes('stubble')) d.push({ name: 'stubble', bone: 'head', x: -5, y: -4, grid: ['h.h', '.h.'], key: { h: 'hair:2' }, clip: ['head'] });
     d.push({
       name: 'face',
       bone: 'head',

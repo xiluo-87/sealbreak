@@ -119,4 +119,23 @@ export const THISTLE_FOLK: FolkSpec[] = [
   },
 ];
 
-export const THISTLE_FOLK_SPRITES = THISTLE_FOLK.map(folkSprites);
+/** People met on the Thistle Road. */
+export const ROAD_FOLK: FolkSpec[] = [
+  {
+    id: 'mudge',
+    name: 'Toll Keeper Mudge',
+    build: 'stout',
+    skin: '#e8b090',
+    hair: '#6a4a34',
+    hairStyle: 'short',
+    top: '#3f5a46',
+    topStyle: 'jacket',
+    bottom: '#4a3e34',
+    shoes: '#2e2620',
+    hat: { style: 'tophat', colour: '#2e2a26' },
+    accent: '#7a3a2a',
+    extras: ['moustache', 'ledger', 'chain'],
+  },
+];
+
+export const THISTLE_FOLK_SPRITES = [...THISTLE_FOLK, ...ROAD_FOLK].map(folkSprites);

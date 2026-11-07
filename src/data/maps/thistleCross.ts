@@ -40,8 +40,8 @@ export const THISTLE_CROSS: MapDef = {
   ],
   exits: [
     { x: 19, y: 6, to: 'post-office', toX: 7, toY: 9, facing: 'up', if: { notFlag: DONE }, blocked: 'po-locked' },
-    { x: 38, y: 12, to: 'thistle-road', toX: 1, toY: 6, facing: 'right', if: { flag: DONE }, blocked: 'leave-early' },
-    { x: 38, y: 13, to: 'thistle-road', toX: 1, toY: 7, facing: 'right', if: { flag: DONE }, blocked: 'leave-early' },
+    { x: 38, y: 12, to: 'thistle-road', toX: 1, toY: 5, facing: 'right', if: { flag: DONE }, blocked: 'leave-early' },
+    { x: 38, y: 13, to: 'thistle-road', toX: 1, toY: 6, facing: 'right', if: { flag: DONE }, blocked: 'leave-early' },
   ],
   npcs: [
     { id: 'ned', sprite: 'ned', x: 7, y: 22, facing: 'down', dialogue: 'ned' },

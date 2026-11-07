@@ -4,7 +4,7 @@ A short browser RPG where every skill comes from a letter you can carry, open or
 
 ## Current state
 
-Milestones 0 to 4 are done: the sprite pipeline (see `docs/SPRITES.md`), the field with Thistle Cross, the opening office scene, dialogue with story flags and save/load, the battle core in `src/battle/`, and letters (rules in `src/letters/`, letter skills in `src/battle/letterSkills.ts`, satchel and reader in `src/ui/`). Thistle Road is a stub that ends at the toll gate, with three fixed fights standing in for random encounters until Milestone 5. Milestone 4 is waiting on a playtest before Milestone 5 starts.
+Milestones 0 to 5 are done, plus touch controls and phone layout from Milestone 10: the sprite pipeline (see `docs/SPRITES.md`), Thistle Cross and the opening, dialogue with story flags and save/load, the battle core in `src/battle/`, letters (`src/letters/`, `src/battle/letterSkills.ts`, satchel and reader in `src/ui/`), and random encounters (`src/game/encounters.ts`, regions in `src/data/regions.ts`). Every enemy and boss for the whole game already has data in `src/data/enemies.ts` and a sprite (humans from `src/sprites/characters/humanKit.ts`, creatures in `creatures.ts`, portraits from `portraitGen.ts`). The Thistle Road ends at the toll gate, where Fenn joins. Next up is Milestone 6, the journey.
 
 ## Tech rules
 

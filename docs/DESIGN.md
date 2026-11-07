@@ -191,7 +191,7 @@ Ailments are kept to three: **Slow** (timeline delays +50%), **Weak** (ATK −25
 | Fenn Harrow | 85 | 14 | 11 | 9 | 6 | 6 | Grief, Anger | Taunt, Shield Bash (toll-gate sign as a shield; can cause Slow) |
 | Juniper Quill | 48 | 20 | 9 | 4 | 14 | 8 | Debt, Threat | Pickpocket, False Signature (copies an enemy's last buff) |
 
-Per level, each gains about +8 HP, +2 FP, +1.5 ATK, +1 DEF, +0.5 SPD and +1 WIL, weighted toward their role. The level cap is 15, and the target is about level 12 at the final boss. Level *n* needs a total of `12n + 3n²` XP (level 1 starts at 0). A battle's XP is split equally across the party, including those knocked out; delivery XP is not split.
+Per level, each gains about +8 HP, +2 FP, +1.5 ATK, +1 DEF, +0.5 SPD and +1 WIL, weighted toward their role. Fenn and Juniper join at one level below the Rookie, so nobody has to grind to catch them up. The level cap is 15, and the target is about level 12 at the final boss. Level *n* needs a total of `12n + 3n²` XP (level 1 starts at 0). A battle's XP is split equally across the party, including those knocked out; delivery XP is not split.
 
 **Biscuit** has no HP and can't be targeted. Biscuit acts after every third turn of the timeline: a headbutt (power 8 with ATK 9, 50%), eating an enemy's held item (25%), or wandering about (25%). Items eaten by Biscuit sometimes come back later, slightly chewed. Giving Biscuit an apple adds one to a hidden trust counter.
 
@@ -224,11 +224,11 @@ The transition into a fight should take under 0.5 s. Normal random fights should
 
 **Running:** the chance is `50% + 10% × (party average SPD − enemy average SPD)`, kept between 30% and 95%. It is always 100% if the party's average level is 2 or more above the enemies'. Inspectors reduce the chance by 30 percentage points. Bosses and scripted fights cannot be escaped. A failed attempt uses the turn.
 
-**Repel Bell:** a consumable that stops the gauge rising for 40 steps. The party starts with one, and shops sell them for a price that rises by region.
+**Repel Bell:** a consumable that stops the gauge rising, and keeps anything from turning up, for 40 steps. The party starts with one, and shops sell them for a price that rises by region.
 
 ### 7.3 Inspectors
 
-When an encounter would be a battle, the chance it becomes an Inspector patrol is `min(5% + 4% × Heat, 50%)`.
+When an encounter would be a battle, the chance it becomes an Inspector patrol is `min(5% + 4% × Heat, 50%)`. A patrol is one Inspector, two from Heat 3, and an Inspector with a Senior Inspector from Heat 6.
 
 Heat also changes the final act: at Heat 3 or below, Vane fights alone. At Heat 8 or above, she brings two Senior Inspectors.
 
@@ -240,7 +240,7 @@ Heat also changes the final act: at Heat 3 or below, Vane fights alone. At Heat 
 | 1 | | Angry Goose | 14 | 8 | 2 | 2 | 14 | 10 | 2 | Honk delays one ally |
 | 1 | | Road Brigand | 26 | 8 | 4 | 3 | 9 | 14 | 8 | Steals coin |
 | 2 | Fen Road | Leech Clump | 28 | 9 | 3 | 4 | 7 | 18 | 4 | Drains HP |
-| 2 | | Marsh Wisp | 20 | 6 | 2 | 12 | 13 | 20 | 6 | Fear, weak to Love |
+| 2 | | Marsh Wisp | 20 | 6 | 2 | 12 | 13 | 20 | 6 | Fear, weak to Love: reading any Love letter near one hurts it |
 | 2 | | Reed Bandit | 36 | 11 | 5 | 4 | 10 | 22 | 12 | Comes in groups |
 | 3 | Copperhill Road | Rust Hound | 40 | 14 | 6 | 4 | 14 | 26 | 8 | Bites cause Weak |
 | 3 | | Slag Crawler | 60 | 13 | 12 | 5 | 5 | 28 | 10 | High DEF, low WIL |

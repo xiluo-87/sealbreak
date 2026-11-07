@@ -31,9 +31,20 @@ export const CUTSCENES: Record<string, Cutscene> = Object.fromEntries(
           { say: 'office-4' },
         ],
       },
-      { id: 'road-goose', steps: [{ say: 'goose-appears' }, { battle: 'road-goose' }] },
-      { id: 'road-hogs', steps: [{ say: 'hogs-appear' }, { battle: 'road-hogs' }] },
-      { id: 'road-brigand', steps: [{ say: 'brigand-appears' }, { battle: 'road-brigand' }] },
+      {
+        id: 'toll-dispute',
+        steps: [
+          { face: 'player', dir: 'right' },
+          { walk: 'mudge', path: ['left', 'left'] },
+          { face: 'mudge', dir: 'left' },
+          { say: 'toll-1' },
+          { battle: 'toll-dispute' },
+          { say: 'toll-2' },
+          { fade: 'out' },
+          { warp: { map: 'thistle-road', x: 74, y: 4, facing: 'right' } },
+          { fade: 'in' },
+        ],
+      },
     ] satisfies Cutscene[]
   ).map((c) => [c.id, c]),
 );

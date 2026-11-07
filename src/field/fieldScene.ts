@@ -13,6 +13,10 @@ import { type Dialogue, DialogueRun, fillText } from '../game/dialogue';
 import type { Scene, SceneContext } from '../game/scene';
 import type { GameState } from '../game/state';
 import { deliveryNotice } from '../letters/letters';
+import { battleFor, bellOf, enterRoad, regionGain, rollEncounter, stepDanger, terrainOf } from '../game/encounters';
+import { Rng } from '../game/rng';
+import { settings } from '../game/settings';
+import { REGIONS } from '../data/regions';
 import { hint } from '../input/hints';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from '../render/scale';
 import { paintGround, tallSpriteFor } from '../render/tileArt';
@@ -28,7 +32,7 @@ export interface FieldHooks {
   autosave(state: GameState): void;
   openMenu(): void;
   /** Starts a battle; `done` runs when the party is back in the field. */
-  battle(encounter: string, done: (result: 'victory' | 'fled') => void): void;
+  battle(encounter: string, done: (result: 'victory' | 'fled' | 'delivered', delivered: string | null) => void): void;
   /** A short message, such as a hint. */
   notify(text: string): void;
 }
@@ -97,6 +101,7 @@ export class FieldScene implements Scene {
       groundCache.set(id, ground);
     }
     this.ground = ground;
+    if (def.kind === 'road' && this.state.mapId !== id) enterRoad(this.state.road);
     this.state.mapId = id;
     this.player.place(x, y, facing);
     this.savePosition();
@@ -125,7 +130,10 @@ export class FieldScene implements Scene {
     this.followers = this.followers.filter((f) => want.includes(f.id));
     for (const id of want) {
       if (this.followers.some((f) => f.id === id)) continue;
-      const from = this.npcs.get(id)?.actor.m ?? this.followers[this.followers.length - 1]?.m ?? this.player.m;
+      // A newcomer steps out from where they were standing, if they were on the map.
+      const npc = this.npcs.get(id);
+      const shown = npc && check(npc.def.if, this.state) ? npc.actor.m : undefined;
+      const from = shown ?? this.followers[this.followers.length - 1]?.m ?? this.player.m;
       this.followers.push(new Actor(id, id, from.tx, from.ty, from.facing));
     }
     this.followers.sort((a, b) => want.indexOf(a.id) - want.indexOf(b.id));
@@ -148,12 +156,7 @@ export class FieldScene implements Scene {
     if (!ev) return false;
     if (ev.cutscene) this.startCutscene(ev.cutscene);
     else if (ev.dialogue) this.say(ev.dialogue, () => undefined);
-    else if (ev.battle) {
-      this.inBattle = true;
-      this.hooks.battle(ev.battle, () => {
-        this.inBattle = false;
-      });
-    }
+    else if (ev.battle) this.fight(ev.battle);
     return true;
   }
 
@@ -192,14 +195,51 @@ export class FieldScene implements Scene {
     this.box.hide();
     this.syncFollowers();
     const deliveries = d?.run.out.deliveries ?? [];
+    const fights = [...(d?.run.out.fights ?? [])];
+    // Fights a conversation started come after it, then whatever was waiting.
+    const finish = (): void => {
+      const f = fights.shift();
+      if (f === 'random') {
+        const rng = Rng.fromState(this.state.rng);
+        const id = REGIONS[this.map.def.region] ? battleFor(this.state, this.map.def.region, rng) : 'road-hogs';
+        this.state.rng = rng.getState();
+        this.fight(id, finish);
+      } else if (f) this.fight(f, finish);
+      else d?.onDone();
+    };
     if (d && deliveries.length > 0) {
       // Report what the delivery brought, then carry on.
       const lines = deliveries.flatMap((r) => deliveryNotice(r.letter, r, this.state.rookieName).map((text) => ({ text })));
       lines.push({ text: 'You can read it in the satchel.' });
-      this.sayDialogue({ id: 'delivery', entry: [{ node: 'n' }], nodes: { n: { lines } } }, d.onDone);
+      this.sayDialogue({ id: 'delivery', entry: [{ node: 'n' }], nodes: { n: { lines } } }, finish);
       return;
     }
-    d?.onDone();
+    finish();
+  }
+
+  /** Starts a battle. A recipient who was handed their letter mid-fight then reacts to it. */
+  fight(id: string, after: () => void = () => undefined): void {
+    this.inBattle = true;
+    this.hooks.battle(id, (result, delivered) => {
+      this.inBattle = false;
+      if (result === 'delivered' && delivered && DIALOGUE[`recipient-${delivered}`]) this.say(`recipient-${delivered}`, after);
+      else after();
+    });
+  }
+
+  /** A step on a road: the danger gauge rises, and something may turn up. */
+  private roadStep(): void {
+    const s = this.state;
+    const region = this.map.def.region;
+    if (!REGIONS[region]) return;
+    const rng = Rng.fromState(s.rng);
+    const tile = this.map.def.grid[this.player.m.ty]?.[this.player.m.tx] ?? '.';
+    const hit = stepDanger(s.road, regionGain(s, region, settings.lowEncounters), terrainOf(tile), rng);
+    const roll = hit ? rollEncounter(s, region, rng) : null;
+    s.rng = rng.getState();
+    if (!roll) return;
+    if (roll.kind === 'event') this.say(`event-${roll.event}`, () => undefined);
+    else this.fight(roll.encounter);
   }
 
   private updateDialogue(ctx: SceneContext): void {
@@ -349,7 +389,8 @@ export class FieldScene implements Scene {
       this.fadeTo = 1;
       return;
     }
-    this.runEvents('step', m.tx, m.ty);
+    if (this.runEvents('step', m.tx, m.ty)) return;
+    if (this.map.def.kind === 'road' && !this.cutscene && !this.dialogue) this.roadStep();
   }
 
   private interact(): void {
@@ -460,9 +501,50 @@ export class FieldScene implements Scene {
     items.sort((a, b) => a.y - b.y || a.order - b.order);
     for (const it of items) it.draw();
 
+    if (this.map.def.kind === 'road' && REGIONS[this.map.def.region]) this.drawBell(g);
+
     if (this.fade > 0) {
       g.fillStyle = `rgba(14, 12, 20, ${this.fade.toFixed(3)})`;
       g.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    }
+  }
+
+  /** The roadside bell: still, swinging, ringing, or wrapped up by a Repel Bell. */
+  private drawBell(g: CanvasRenderingContext2D): void {
+    const bell = bellOf(this.state.road);
+    const t = performance.now();
+    const swing = settings.reducedMotion ? 0 : bell === 'ringing' ? Math.round(Math.sin(t / 70) * 2) : bell === 'swinging' ? Math.round(Math.sin(t / 260)) : 0;
+    const x = 14;
+    const y = 10;
+    g.fillStyle = 'rgba(20, 16, 26, 0.55)';
+    g.fillRect(x - 6, y - 4, 30, 30);
+    // Post and bracket.
+    g.fillStyle = '#5a4030';
+    g.fillRect(x + 8, y - 2, 2, 4);
+    g.fillRect(x + 4, y - 2, 10, 2);
+    const bx = x + swing;
+    const body = bell === 'muffled' ? ['#a8a090', '#8a8272', '#6e6656'] : bell === 'ringing' ? ['#f4dc8c', '#e0a040', '#a0582a'] : ['#f4dc8c', '#d3a648', '#9c6e2e'];
+    const rows: [number, number][] = [[7, 4], [6, 6], [5, 8], [5, 8], [4, 10], [4, 10], [3, 12], [2, 14]];
+    rows.forEach(([ox, w], i) => {
+      g.fillStyle = body[1] ?? '#d3a648';
+      g.fillRect(bx + ox - 1, y + 2 + i * 2, w, 2);
+      g.fillStyle = body[0] ?? '#f4dc8c';
+      g.fillRect(bx + ox, y + 2 + i * 2, 2, 2);
+      g.fillStyle = body[2] ?? '#9c6e2e';
+      g.fillRect(bx + ox + w - 3, y + 2 + i * 2, 2, 2);
+    });
+    g.fillStyle = '#4a3020';
+    g.fillRect(bx + 7 - swing, y + 18, 3, 3);
+    if (bell === 'muffled') {
+      g.fillStyle = '#e8e0cc';
+      g.fillRect(bx + 2, y + 8, 14, 3);
+    }
+    if (bell === 'ringing' && !settings.reducedMotion && Math.floor(t / 200) % 2 === 0) {
+      g.fillStyle = '#f3ead6';
+      g.fillRect(x - 3, y + 6, 2, 1);
+      g.fillRect(x - 4, y + 10, 2, 1);
+      g.fillRect(x + 19, y + 6, 2, 1);
+      g.fillRect(x + 20, y + 10, 2, 1);
     }
   }
 
@@ -477,6 +559,7 @@ export class FieldScene implements Scene {
       map: this.map.def.id,
       tile: `${m.tx},${m.ty} ${m.facing}`,
       walked: this.state.steps,
+      danger: `${this.state.road.gauge.toFixed(0)} cd${this.state.road.cooldown} r${this.state.road.repel}`,
       flags: Object.keys(this.state.flags).length,
     };
   }
